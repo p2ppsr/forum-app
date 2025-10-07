@@ -11,6 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bsv/sdk": "^1.8.2",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.4",
+    "@mui/styled-engine": "^7.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
