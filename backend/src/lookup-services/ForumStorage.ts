@@ -1,16 +1,16 @@
 import { Collection, Db } from 'mongodb'
-import { TemplateRecord, UTXOReference } from '../types'
+import { ForumRecord, UTXOReference } from '../types'
 
-// Template for a Storage System that can be modified for your specific use-case.
-export class TemplateStorage {
-  private readonly records: Collection<TemplateRecord>
+// Forum for a Storage System that can be modified for your specific use-case.
+export class ForumStorage {
+  private readonly records: Collection<ForumRecord>
 
   /**
    * Constructs a new instance of the database
    * @param {Db} db - A connected MongoDB database instance.
    */
   constructor(private readonly db: Db) {
-    this.records = db.collection<TemplateRecord>('template record')
+    this.records = db.collection<ForumRecord>('template record')
   }
 
   /**

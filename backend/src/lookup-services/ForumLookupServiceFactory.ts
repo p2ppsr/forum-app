@@ -1,4 +1,4 @@
-import docs from './TemplateLookupDocs.md.js'
+import docs from './ForumLookupDocs.md.js'
 import {
   LookupService,
   LookupQuestion,
@@ -9,17 +9,17 @@ import {
   OutputAdmittedByTopic,
   OutputSpent
 } from '@bsv/overlay'
-import { TemplateStorage } from './TemplateStorage.js'
+import { ForumStorage } from './ForumStorage.js'
 import { Db } from 'mongodb'
 
 /**
- * Template for a Lookup Service that can be modified for your speicific use-case.
+ * Forum for a Lookup Service that can be modified for your speicific use-case.
  */
-export class TemplateLookupService implements LookupService {
+export class ForumLookupService implements LookupService {
   readonly admissionMode: AdmissionMode
   readonly spendNotificationMode: SpendNotificationMode
 
-  constructor(public storage: TemplateStorage) { }
+  constructor(public storage: ForumStorage) { }
 
   /**
    * Invoked when a new output is added to the overlay.
@@ -89,11 +89,11 @@ export class TemplateLookupService implements LookupService {
     informationURL?: string
   }> {
     return {
-      name: 'Template Lookup Service',
+      name: 'Forum Lookup Service',
       shortDescription: 'Find messages on-chain'
     }
   }
 }
 
 // Factory
-export default (db: Db): TemplateLookupService => new TemplateLookupService(new TemplateStorage(db))
+export default (db: Db): ForumLookupService => new ForumLookupService(new ForumStorage(db))

@@ -1,5 +1,5 @@
 // TODO add the fields of the outputs and any other keys that you want to store on the database
-export interface TemplateRecord {
+export interface ForumRecord {
   txid: string
   outputIndex: number  
   createdAt: Date   // Used as an example
