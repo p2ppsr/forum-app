@@ -10,10 +10,10 @@ interface Constants {
   let constants: Constants
   
   constants = { 
-    protocolId: "test_forum_1" ,
+    protocolId: "testforum1" ,
     securityProtocol: 1,
-    topicManager: "tm_test_forum_1",
-    lookupService: "ls_test_forum_1"
+    topicManager: "tm_testforum1",
+    lookupService: "ls_testforum1"
   }
   
   

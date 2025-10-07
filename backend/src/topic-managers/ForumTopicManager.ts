@@ -27,7 +27,8 @@ export default class ForumTopicManager implements TopicManager {
           const decodedScript = PushDrop.decode(output.lockingScript);
           const fields = decodedScript.fields;
 
-          if (fields.length === 4) {
+          // Check if the output is a topic
+          if (fields.length === 5) {
             (await this.checkTopic(fields))
               ? admissibleOutputs.push(index)
               : console.log("Invalid topic")
@@ -94,8 +95,7 @@ export default class ForumTopicManager implements TopicManager {
       }
       
       try {
-        console.log('Public Key:', Utils.toUTF8(Utils.toArray(fields[4])))
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[3])))
       } catch {
         console.log('Invalid public key format.')
         return false

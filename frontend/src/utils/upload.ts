@@ -14,13 +14,13 @@ export async function uploadTopic({
   setStatusText: (text: string) => void
 }) {
   const created_at = Date.now();
-  const created_by = wallet.getPublicKey({ identityKey: true });
+  const created_by = (await wallet.getPublicKey({ identityKey: true })).publicKey;
 
   const fields = [
     Utils.toArray(title, "utf8"),
     Utils.toArray(description, "utf8"),
     Utils.toArray("" + created_at, "utf8"),
-    Utils.toArray(created_by, "utf8"),
+    Utils.toArray("" + created_by, "utf8"),
   ];
 
   const lockingScript = await pushdrop.lock(
