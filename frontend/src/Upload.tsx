@@ -1,9 +1,9 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { uploadTopic } from "./utils/upload";
 import { Alert, Box, Button, Paper, Stack, TextField, Typography, LinearProgress } from "@mui/material";
-import type { UITopic } from "./components/TopicCard";
-
-export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: UITopic) => void }) {
+import type { Topic } from "./utils/types";
+import { topicExists } from "./utils/topicExists";
+export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: Topic) => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("");
@@ -19,12 +19,20 @@ export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: UITopi
     setError(null);
     const createdAt = Date.now();
     try {
-      await uploadTopic({ title: title.trim(), description: description.trim(), setStatusText: setStatus });
       // Inform parent so Home can optimistically show the new topic
-      onTopicCreated?.({ id: `temp:${createdAt}`, title: title.trim(), description: description.trim(), createdAt });
-      setStatus("Done.");
-      setTitle("");
-      setDescription("");
+      console.log('trimmed title:',title.trim(), 'pretrimmed title:',title);
+      let topicAlreadyExists = await topicExists(title.trim());
+      if(!topicAlreadyExists)
+      {
+        await uploadTopic({ title: title.trim(), description: description.trim(), setStatusText: setStatus });
+        onTopicCreated?.({ id: `temp:${createdAt}`, title: title.trim(), description: description.trim(), createdAt: createdAt.toString(), type:'topic' });
+        setStatus("Done.");
+        setTitle("");
+        setDescription("");
+      }
+        else{
+          setError("Topic with this title already exists. Please choose a different title.");
+        }
     } catch (err: any) {
       setError(err?.message || "Upload failed");
     } finally {
