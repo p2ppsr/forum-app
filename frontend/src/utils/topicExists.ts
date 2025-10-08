@@ -17,12 +17,12 @@ export async function topicExists( topicTitle: string ): Promise<string| undefin
     query: query} as LookupQuestion
     const resolver = new LookupResolver({networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet",})
-    const lookupResult = await resolver.query(question)
-    const parsedTransaction = await Transaction.fromBEEF(lookupResult.outputs[0].beef)
-    if(lookupResult.type !== 'output-list'){
-        throw new Error('Unexpected response from lookup service')
-    }
+      const lookupResult = await resolver.query(question)
+      if(lookupResult.type !== 'output-list'){
+          throw new Error('Unexpected response from lookup service')
+      }
     if(lookupResult.outputs.length > 0){
+        const parsedTransaction = await Transaction.fromBEEF(lookupResult.outputs[0].beef)
         return parsedTransaction.id('hex')
     }
     return undefined;
