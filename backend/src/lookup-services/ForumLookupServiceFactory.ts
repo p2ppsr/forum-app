@@ -89,7 +89,6 @@ export class ForumLookupService implements LookupService {
    */
   async lookup(question: LookupQuestion): Promise<LookupAnswer | LookupFormula> {
       const {query, parameter } = question.query as forumQuery
-      console.log('Received query:', query, 'with parameter:', parameter, 'question:', question);
       // Validate query presence
       if (!query) {
         throw new Error('A valid query must be provided!');
@@ -102,7 +101,6 @@ export class ForumLookupService implements LookupService {
       // Handle specific queries
       if(query === 'getTopic' && parameter )
       {
-        console.log('para:',parameter);
           return await this.storage.findTopic(parameter)
       }
       if (query === 'getAllTopics') {

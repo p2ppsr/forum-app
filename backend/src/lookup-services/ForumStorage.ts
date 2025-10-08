@@ -147,8 +147,6 @@ export class ForumStorage {
   } 
   async findTopic(topicTitle: string): Promise<UTXOReference[]> {
     let utxos = [] as UTXOReference[]
-    console.log('topic to look for',topicTitle);
-    console.log('all topics: ', (await this.topics.find({}).toArray()));
     const topic = await this.topics.findOne({topicTitle: topicTitle})
     if(topic)
     {
