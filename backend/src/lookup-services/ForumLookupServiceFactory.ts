@@ -44,7 +44,7 @@ export class ForumLookupService implements LookupService {
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'topic' )
       {
-        await this.storage.storeRecord(txid, outputIndex, 'topic', {field1: Utils.toUTF8(Utils.toArray(fields[2]))} )
+        await this.storage.storeRecord(txid, outputIndex, 'topic', {field1: Utils.toUTF8(Utils.toArray(fields[1]))} )
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reaction' )
       {
@@ -102,6 +102,7 @@ export class ForumLookupService implements LookupService {
       // Handle specific queries
       if(query === 'getTopic' && parameter )
       {
+        console.log('para:',parameter);
           return await this.storage.findTopic(parameter)
       }
       if (query === 'getAllTopics') {
