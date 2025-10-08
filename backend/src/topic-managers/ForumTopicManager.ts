@@ -34,6 +34,14 @@ export default class ForumTopicManager implements TopicManager {
               : console.log("Invalid topic")
             continue
           }
+
+          // Check if the output is a post
+          if (Utils.toUTF8(Utils.toArray(fields[0])) === "post") {
+            (await this.checkPost(fields))
+              ? admissibleOutputs.push(index)
+              : console.log("Invalid post")
+            continue
+          }
         } catch (error) {
           continue
         }
@@ -110,7 +118,55 @@ export default class ForumTopicManager implements TopicManager {
       console.error("Error checking topic", error);
       return false
     }
-    
+
+    return true
+  }
+
+  async checkPost(fields: number[][]) {
+    try {
+
+      if (fields.length !== 7) {
+        console.log("Invalid post fields length");
+        return false
+      }
+
+      if (fields[1].length === 0) {
+        console.log("Invalid post topic_txid");
+        return false
+      }
+
+      if (fields[2].length === 0) {
+        console.log("Invalid post title");
+        return false
+      }
+
+      if (fields[3].length === 0) {
+        console.log("Invalid post body");
+        return false
+      }
+
+      // No check for tags
+
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10)
+      const now = Date.now();
+      const thirtyMin = 30 * 60 * 1000;
+
+      if (Number.isNaN(createdAt) || createdAt > now || createdAt < now - thirtyMin) {
+        console.log("Invalid post created_at");
+        return false
+      }
+      
+      try {
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])))
+      } catch {
+        console.log('Invalid public key format.')
+        return false
+      }
+    } catch (error) {
+      console.error("Error checking post", error);
+      return false
+    }
+
     return true
   }
 }
