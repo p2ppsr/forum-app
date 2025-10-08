@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Button, Paper, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { topicExists } from "../utils/topicExists";
 import { uploadPost } from "../utils/upload";
 
@@ -29,18 +39,19 @@ export default function UploadPost() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const canSubmit = useMemo(() => tab === "text" && title.trim() && body.trim(), [tab, title, body]);
+  const canSubmit = useMemo(
+    () => tab === "text" && title.trim() && body.trim(),
+    [tab, title, body]
+  );
 
   const onPost = async () => {
-/*    const topicTxid = await getTopicTxid()
+    const topicTxid = await getTopicTxid();
     if (!topicTxid) {
       setError("Topic does not exist");
       return;
     }
-  */
- 
-    const topicTxid = "uwu";
-    await uploadPost({topicTxid, title, body, tags: []});
+
+    await uploadPost({ topicTxid, title, body, tags: [] });
 
     setStatus("Post submitted (demo)");
     setError(null);
@@ -61,17 +72,36 @@ export default function UploadPost() {
   return (
     <Stack spacing={2}>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={2}
+        >
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="overline" color="text.secondary">Posting in</Typography>
-            <Typography variant="h5" noWrap title={topic}>{topic}</Typography>
+            <Typography variant="overline" color="text.secondary">
+              Posting in
+            </Typography>
+            <Typography variant="h5" noWrap title={topic}>
+              {topic}
+            </Typography>
           </Box>
-          <Button variant="text" onClick={() => (window.location.hash = "/topic")}>Back to Thread</Button>
+          <Button
+            variant="text"
+            onClick={() => (window.location.hash = "/topic")}
+          >
+            Back to Thread
+          </Button>
         </Stack>
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Tabs value={tab === "text" ? 0 : 1} onChange={(_, v) => setTab(v === 0 ? "text" : "media")} textColor="primary" indicatorColor="primary">
+        <Tabs
+          value={tab === "text" ? 0 : 1}
+          onChange={(_, v) => setTab(v === 0 ? "text" : "media")}
+          textColor="primary"
+          indicatorColor="primary"
+        >
           <Tab label="Text" />
           <Tab label="Images & Video" />
         </Tabs>
@@ -97,8 +127,24 @@ export default function UploadPost() {
             {status && <Alert severity="info">{status}</Alert>}
             {error && <Alert severity="error">{error}</Alert>}
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Button variant="contained" disabled={!canSubmit} onClick={onPost}>Post</Button>
-              <Button variant="text" onClick={() => { setTitle(""); setBody(""); setStatus(""); setError(null); }}>Clear</Button>
+              <Button
+                variant="contained"
+                disabled={!canSubmit}
+                onClick={onPost}
+              >
+                Post
+              </Button>
+              <Button
+                variant="text"
+                onClick={() => {
+                  setTitle("");
+                  setBody("");
+                  setStatus("");
+                  setError(null);
+                }}
+              >
+                Clear
+              </Button>
             </Box>
           </Stack>
         ) : (
