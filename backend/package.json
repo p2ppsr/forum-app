@@ -11,9 +11,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@bsv/overlay": "^0.2.1",
+    "@bsv/overlay": "^0.2.2",
+    "@bsv/sdk": "^1.8.2",
     "express": "^5.1.0",
-    "mongodb": "^6.16.0"
+    "mongodb": "^6.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",

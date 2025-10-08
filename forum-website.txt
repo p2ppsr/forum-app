@@ -1,5 +1,6 @@
 Topics
 
+type
 title
 description
 created_at
@@ -8,6 +9,7 @@ created_by
 
 Post
 
+type
 topic_txid
 title
 body
@@ -19,7 +21,8 @@ tags
 
 Replies
 
-post_txid
+type
+parent_post_txid
 parent_reply_id
 body
 created_at
@@ -29,10 +32,11 @@ created_by
 
 Reaction
 
+type
 p_r_txid
 body
 created_by
-
+parent_post_txid
 
 
 

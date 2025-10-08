@@ -11,13 +11,15 @@ import {
 } from '@bsv/overlay'
 import { ForumStorage } from './ForumStorage.js'
 import { Db } from 'mongodb'
-
+import constants from '../../const'
+import { PushDrop, Utils } from '@bsv/sdk'
+import { forumQuery } from '../types.js'
 /**
  * Forum for a Lookup Service that can be modified for your speicific use-case.
  */
 export class ForumLookupService implements LookupService {
-  readonly admissionMode: AdmissionMode
-  readonly spendNotificationMode: SpendNotificationMode
+  readonly admissionMode: AdmissionMode = 'locking-script'
+  readonly spendNotificationMode: SpendNotificationMode = 'none'
 
   constructor(public storage: ForumStorage) { }
 
@@ -26,7 +28,36 @@ export class ForumLookupService implements LookupService {
    * @param payload 
    */
   async outputAdmittedByTopic(payload: OutputAdmittedByTopic): Promise<void> {
-    // TODO add the admitted output to the storage database
+    if (payload.mode !== 'locking-script') throw new Error('Invalid mode')
+    
+    const { topic, lockingScript, txid, outputIndex } = payload
+    
+    if(topic != constants.topicManager) return
+    
+    try
+    {
+      const decodedOutput = await PushDrop.decode(lockingScript)
+      const fields = decodedOutput.fields
+     if(Utils.toUTF8(Utils.toArray(fields[0])) == 'post' )
+      {
+        await this.storage.storeRecord(txid, outputIndex, 'post', {field1: Utils.toUTF8(Utils.toArray(fields[1]))} )
+      }
+      else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'topic' )
+      {
+        await this.storage.storeRecord(txid, outputIndex, 'topic', {field1: ''} )
+      }
+      else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reaction' )
+      {
+        await this.storage.storeRecord(txid, outputIndex, 'reaction', {field1: Utils.toUTF8(Utils.toArray(fields[1])), field2: Utils.toUTF8(Utils.toArray(fields[4]))} )
+      }
+      else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reply' )
+      {
+        await this.storage.storeRecord(txid, outputIndex, 'reply', {field1: Utils.toUTF8(Utils.toArray(fields[2]))})
+      }
+    }
+    catch(e){
+    
+      throw new Error('Error processing output')}
     return
   }
 
@@ -35,7 +66,9 @@ export class ForumLookupService implements LookupService {
    * @param payload - The output admitted by the topic manager
    */
   async outputSpent(payload: OutputSpent): Promise<void> {
-    // TODO remove the spent output from the storage database
+    const { topic, txid, outputIndex } = payload
+    if(topic != constants.topicManager) return
+    await this.storage.deleteRecord(txid, outputIndex)
     return
   }
 
@@ -55,22 +88,25 @@ export class ForumLookupService implements LookupService {
    * @returns A promise that resolves to a lookup answer or formula
    */
   async lookup(question: LookupQuestion): Promise<LookupAnswer | LookupFormula> {
-      const query = question.query
+      const {query, parameters } = question.query as forumQuery
 
       // Validate query presence
       if (!query) {
         throw new Error('A valid query must be provided!');
       }
-
       // Validate service
-      if (question.service !== 'ls_template') {
+      if (question.service !== constants.topicManager) {
         throw new Error('Lookup service not supported!');
       }
 
       // Handle specific queries
-      if (query === 'findAll') {
-        return await this.storage.findAll();
+      if (query === 'getallTopics') {
+        return await this.storage.findAlltopics();
       }  
+      if(query === 'getPost' && parameters && parameters.post_txid)
+      {
+         return await this.storage.getPost(parameters.post_txid);
+      }
 
       throw new Error('Unknown query type');
     }
