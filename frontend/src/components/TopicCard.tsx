@@ -1,13 +1,8 @@
 import { Card, CardContent, CardHeader, Typography } from "@mui/material";
+import type{Topic} from "../utils/types";
 
-export interface UITopic {
-  id: string;
-  title: string;
-  description: string;
-  createdAt: number;
-}
 
-export default function TopicCard({ topic }: { topic: UITopic }) {
+export default function TopicCard({ topic }: { topic: Topic }) {
   const date = new Date(topic.createdAt);
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>

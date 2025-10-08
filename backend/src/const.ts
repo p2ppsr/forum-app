@@ -6,9 +6,9 @@ import type { SecurityLevel } from "@bsv/sdk"
     lookupService: string
   }
   let constants: Constants = { 
-    protocolId: "test_forum_1" ,
+    protocolId: "testforum1" ,
     securityProtocol: 1,
-    topicManager: "tm_test_forum_1",
-    lookupService: "ls_test_forum_1"
+    topicManager: "tm_testforum1",
+    lookupService: "ls_testforum1"
   }
   export default constants

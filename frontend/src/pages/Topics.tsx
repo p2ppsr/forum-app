@@ -1,8 +1,8 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import TopicCard from "../components/TopicCard";
-import type { UITopic } from "../components/TopicCard";
+import type { Topic } from "../utils/types";
 
-export default function TopicsPage({ topics, onCreateClick }: { topics: UITopic[]; onCreateClick: () => void }) {
+export default function TopicsPage({ topics, onCreateClick }: { topics: Topic[]; onCreateClick: () => void }) {
   if (!topics || topics.length === 0) {
     return (
       <Paper variant="outlined" sx={{ p: 4, textAlign: "center" }}>

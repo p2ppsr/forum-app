@@ -1,14 +1,16 @@
-import { LookupQuestion, LookupResolver, WalletClient, PushDrop, Transaction, Utils
+import {LookupResolver, WalletClient, PushDrop, Transaction, Utils
  } from "@bsv/sdk"
-import { Topic, Post, Reply, Reaction } from "../types"
+import type { LookupQuestion } from "@bsv/overlay"
+import type{ Topic, Post, Reply, Reaction } from "./types.js"
 import type { forumQuery } from "./types"
+import constants from "../constants.js"
 export async function fetchAllTopics(): Promise<Topic[]> {
 let query = {
     query: 'getAllTopics',
     parameters: {}
 } as forumQuery
 let question = {
-    service: 'ls_forumls_test_forum_1',
+    service: constants.lookupService,
     query: query} as LookupQuestion
     const walletclient = new WalletClient()
     const network = await walletclient.getNetwork()
@@ -29,10 +31,12 @@ let question = {
             throw new Error('Unexpected output type: expected topic but got '+type)
         }
         topics.push({
+            id: parsedTransaction.id('hex'),
             type: type,
             title: Utils.toUTF8(Utils.toArray(fields[1])),
             description: Utils.toUTF8(Utils.toArray(fields[2])),
-            created_at: Utils.toUTF8(fields[3]),
+            createdAt: Utils.toUTF8(fields[3]),
+            createdBy: Utils.toUTF8(Utils.toArray(fields[4])),
         })
     }
     return topics
@@ -43,7 +47,7 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
         parameters: topicID
     } as forumQuery
     let question = {
-        service: 'ls_forumls_test_forum_1',
+        service: constants.lookupService,
         query: query} as LookupQuestion
         const walletclient = new WalletClient()
         const network = await walletclient.getNetwork()
@@ -54,7 +58,7 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
             throw new Error('Unexpected response from lookup service')
         }
     
-        let posts = [] 
+        let posts: Post[] = [] 
         for(const output of lookupResult.outputs){
             const parsedTransaction = await Transaction.fromBEEF(output.beef)
             const decodedOutput = await PushDrop.decode(parsedTransaction.outputs[0].lockingScript)
@@ -64,10 +68,14 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
                 throw new Error('Unexpected output type: expected post but got '+type)
             }
             posts.push({
+                id: parsedTransaction.id('hex'),
                 type: type,
-                topicID: Utils.toUTF8(Utils.toArray(fields[1])),
+                topicId: Utils.toUTF8(Utils.toArray(fields[1])),
                 title: Utils.toUTF8(Utils.toArray(fields[2])),
                 body: Utils.toUTF8(Utils.toArray(fields[3])),
+                createdAt: Utils.toUTF8(fields[4]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
+                tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
             })
         }
         return posts
@@ -98,28 +106,35 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
         let type = Utils.toUTF8(Utils.toArray(fields[0]))
         if(type === 'post'){
             post = {
+                id: parsedTransaction.id('hex'),
                 type: type,
-                topicID: Utils.toUTF8(Utils.toArray(fields[1])),
+                topicId: Utils.toUTF8(Utils.toArray(fields[1])),
                 title: Utils.toUTF8(Utils.toArray(fields[2])),
                 body: Utils.toUTF8(Utils.toArray(fields[3])),
+                createdAt: Utils.toUTF8(fields[4]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
+                tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
             }
         }
         else if(type === 'reply'){
             replies.push( {
+                id: parsedTransaction.id('hex'),
                 type: type,
-                parent_postID: Utils.toUTF8(Utils.toArray(fields[2])),
-                parent_replyID: Utils.toUTF8(Utils.toArray(fields[3])),
+                parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
+                parentReplyId: Utils.toUTF8(Utils.toArray(fields[3])),
                 body: Utils.toUTF8(Utils.toArray(fields[4])),
-                created_at: Utils.toUTF8(fields[5]),
+                createdAt: Utils.toUTF8(fields[5]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[6])),
             })
         }
         else if(type === 'reaction'){
             reactions.push( {
+                id: parsedTransaction.id('hex'),
                 type: type,
-                p_r_txid: Utils.toUTF8(Utils.toArray(fields[3])),
-                body: Utils.toUTF8(Utils.toArray(fields[4])),
-                created_by: Utils.toUTF8(Utils.toArray(fields[5])),
-                parent_postID: Utils.toUTF8(Utils.toArray(fields[6])),
+                directParentTxid: Utils.toUTF8(Utils.toArray(fields[2])),
+                body: Utils.toUTF8(Utils.toArray(fields[3])),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[4])),
+                parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
             })
         }
         else{

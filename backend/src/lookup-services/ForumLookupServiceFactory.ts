@@ -11,7 +11,7 @@ import {
 } from '@bsv/overlay'
 import { ForumStorage } from './ForumStorage.js'
 import { Db } from 'mongodb'
-import constants from '../../const'
+import constants from '../const.js'
 import { PushDrop, Utils } from '@bsv/sdk'
 import { forumQuery } from '../types.js'
 /**
@@ -95,7 +95,7 @@ export class ForumLookupService implements LookupService {
         throw new Error('A valid query must be provided!');
       }
       // Validate service
-      if (question.service !== constants.topicManager) {
+      if (question.service !== constants.lookupService) {
         throw new Error('Lookup service not supported!');
       }
 
