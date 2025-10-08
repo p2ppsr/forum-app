@@ -100,14 +100,14 @@ export class ForumLookupService implements LookupService {
       }
 
       // Handle specific queries
-      if (query === 'getallTopics') {
+      if (query === 'getAllTopics') {
         return await this.storage.findAlltopics()
       }  
       if(query === 'getPost' && parameters && parameters.post_txid)
       {
          return await this.storage.findPost(parameters.post_txid)
       }
-      if(query === 'getallPosts' && parameters && parameters.parent_post_txid)
+      if(query === 'getAllPosts' && parameters && parameters.parent_post_txid)
       {
           return await this.storage.findAllPost(parameters.parent_post_txid)
       }

@@ -4,7 +4,7 @@ import { Topic, Post, Reply, Reaction } from "../types"
 import type { forumQuery } from "./types"
 export async function fetchAllTopics(): Promise<Topic[]> {
 let query = {
-    query: 'getallTopics',
+    query: 'getAllTopics',
     parameters: {}
 } as forumQuery
 let question = {
@@ -39,7 +39,7 @@ let question = {
 }
 export async function fetchAllPosts(topicID: string): Promise<Post[]> {
     let query = {
-        query: 'getallPosts',
+        query: 'getAllPosts',
         parameters: topicID
     } as forumQuery
     let question = {

@@ -1,5 +1,5 @@
 export interface forumQuery {
-  query: 'getallTopics' | 'getPost' | 'getallPosts' 
+  query: 'getAllTopics' | 'getPost' | 'getAllPosts' 
   parameters?: string
 }
 export interface Topic {
