@@ -101,11 +101,15 @@ export class ForumLookupService implements LookupService {
 
       // Handle specific queries
       if (query === 'getallTopics') {
-        return await this.storage.findAlltopics();
+        return await this.storage.findAlltopics()
       }  
       if(query === 'getPost' && parameters && parameters.post_txid)
       {
-         return await this.storage.getPost(parameters.post_txid);
+         return await this.storage.findPost(parameters.post_txid)
+      }
+      if(query === 'getallPosts' && parameters && parameters.parent_post_txid)
+      {
+          return await this.storage.findAllPost(parameters.parent_post_txid)
       }
 
       throw new Error('Unknown query type');

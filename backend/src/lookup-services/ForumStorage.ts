@@ -85,9 +85,8 @@ export class ForumStorage {
    * Example query: retrieves all records stored on the database  
    * @returns {Promise<UTXOReference[]>} - Resolves with an array of UTXO references
    */
-  async findAllPost(): Promise<UTXOReference[]> {
-    const query: any = {}
-    return await this.posts.find(query)
+  async findAllPost(topicID: string): Promise<UTXOReference[]> {
+    return await this.posts.find({topicID: topicID})
       .project<UTXOReference>({ txid: 1, outputIndex: 1 })
       .toArray()
       .then(results => results.map(record => ({
@@ -126,7 +125,7 @@ export class ForumStorage {
       })))
   } 
 // TODO
-  async getPost(parent_postID: string): Promise<UTXOReference[]> {
+  async findPost(parent_postID: string): Promise<UTXOReference[]> {
     let utxos = [] as UTXOReference[]
     const post = await this.posts.findOne({txid: parent_postID})
     if(post)
@@ -145,5 +144,4 @@ export class ForumStorage {
     }
     return utxos
   } 
-  // TODO additional custom query functions can be added here.
 }
