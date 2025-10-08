@@ -14,6 +14,9 @@ export default function App() {
   });
 
   useEffect(() => {
+    loadTopics();
+  }, []);
+  useEffect(() => {
     const onHash = () => {
       const r = window.location.hash.replace("#/", "");
       setRoute((r === "upload" || r === "topic") ? (r as any) : "home");
@@ -58,7 +61,6 @@ export default function App() {
           </Tabs>
         </Toolbar>
       </AppBar>
-      <button onClick={loadTopics}>Load Topics</button>
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Container maxWidth="md" sx={{ py: 3 }}>
           <Typography variant="h4" sx={{ mb: 2 }}>
