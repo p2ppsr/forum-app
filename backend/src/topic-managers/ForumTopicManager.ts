@@ -28,7 +28,7 @@ export default class ForumTopicManager implements TopicManager {
           const fields = decodedScript.fields;
 
           // Check if the output is a topic
-          if (fields.length === 5) {
+          if (Utils.toUTF8(Utils.toArray(fields[0])) === "topic") {
             (await this.checkTopic(fields))
               ? admissibleOutputs.push(index)
               : console.log("Invalid topic")
@@ -75,17 +75,23 @@ export default class ForumTopicManager implements TopicManager {
 
   async checkTopic(fields: number[][]) {
     try {
-      if (fields[0].length === 0) {
-        console.log("Invalid topic name");
+
+      if (fields.length !== 6) {
+        console.log("Invalid topic fields length");
         return false
       }
 
       if (fields[1].length === 0) {
+        console.log("Invalid topic name");
+        return false
+      }
+
+      if (fields[2].length === 0) {
         console.log("Invalid topic description");
         return false
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[2])), 10)
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[3])), 10)
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
@@ -95,7 +101,7 @@ export default class ForumTopicManager implements TopicManager {
       }
       
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[3])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])))
       } catch {
         console.log('Invalid public key format.')
         return false
@@ -104,7 +110,7 @@ export default class ForumTopicManager implements TopicManager {
       console.error("Error checking topic", error);
       return false
     }
-
+    
     return true
   }
 }
