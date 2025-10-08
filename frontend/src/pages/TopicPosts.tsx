@@ -1,8 +1,8 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import PostCard from "../components/PostCard";
-import type { UIPost } from "../components/PostCard";
+import type { Post } from "../utils/types";
 
-export default function TopicPosts({ posts = [], onCreatePostClick }: { posts?: UIPost[]; onCreatePostClick?: () => void }) {
+export default function TopicPosts({ posts = [], onCreatePostClick }: { posts?: Post[]; onCreatePostClick?: () => void }) {
   return (
     <Stack spacing={2}>
       <Paper variant="outlined" sx={{ p: 2 }}>

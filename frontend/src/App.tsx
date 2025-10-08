@@ -2,13 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { AppBar, Box, Container, CssBaseline, Tab, Tabs, Toolbar, Typography } from "@mui/material";
 import Upload from "./Upload";
 import TopicsPage from "./pages/Topics";
-import type { UITopic } from "./components/TopicCard";
 import TopicPosts from "./pages/TopicPosts";
-import type { UIPost } from "./components/PostCard";
-
+import type {Topic , Post} from "./utils/types";
+import { fetchAllTopics } from "./utils/forumFetches";
 export default function App() {
   const [tab, setTab] = useState(0);
-  const [topics, setTopics] = useState<UITopic[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [route, setRoute] = useState<"home" | "upload" | "topic">(() => {
     const r = window.location.hash.replace("#/", "");
     return (r === "upload" || r === "topic") ? (r as any) : "home";
@@ -25,21 +24,24 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const handleAddTopic = (t: UITopic) => {
+  const handleAddTopic = (t: Topic) => {
     setTopics(prev => [t, ...prev]);
     setTab(0);
     window.location.hash = "/home";
   };
-
+  const loadTopics = async () => {
+    const fetched = await fetchAllTopics();
+    setTopics(fetched);
+  }
   const title = useMemo(() => {
     if (route === "home") return "Home";
     if (route === "upload") return "Create Topic";
     return "Thread";
   }, [route]);
 
-  const demoPosts: UIPost[] = useMemo(() => ([
-    { id: "p1", title: "Welcome to the thread", body: "This is a demo post body.", createdAt: Date.now() - 5 * 60 * 1000, tags: ["demo", "welcome"] },
-    { id: "p2", title: "Second post", body: "Another example post.", createdAt: Date.now() - 60 * 60 * 1000 },
+  const demoPosts: Post[] = useMemo(() => ([
+    { id: "p1", type: 'Post', topicID:'Some-Random-utxo',  title: "Welcome to the thread", body: "This is a demo post body.", created_at: '390432094', tags: ["demo", "welcome"] },
+    { id: "p2", type: 'Post', topicID:'Some-Random-utxo', title: "Second post", body: "Another example post.", created_at: '205478934', tags: ["example"] },
   ]), []);
 
   return (
@@ -56,7 +58,7 @@ export default function App() {
           </Tabs>
         </Toolbar>
       </AppBar>
-
+      <button onClick={loadTopics}>Load Topics</button>
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Container maxWidth="md" sx={{ py: 3 }}>
           <Typography variant="h4" sx={{ mb: 2 }}>

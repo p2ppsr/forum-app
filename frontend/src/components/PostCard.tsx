@@ -1,16 +1,9 @@
 import { Card, CardContent, CardHeader, Chip, Stack, Typography } from "@mui/material";
+import type { Post } from "../utils/types";
 
-export interface UIPost {
-  id: string;
-  title: string;
-  body: string;
-  createdAt: number;
-  createdBy?: string;
-  tags?: string[];
-}
 
-export default function PostCard({ post }: { post: UIPost }) {
-  const date = new Date(post.createdAt);
+export default function PostCard({ post }: { post: Post }) {
+  const date = new Date(post.created_at);
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>
       <CardHeader
