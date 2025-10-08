@@ -1,4 +1,4 @@
-import {LookupResolver, WalletClient, PushDrop, Transaction, Utils
+import {LookupResolver, PushDrop, Transaction, Utils
  } from "@bsv/sdk"
 import type { LookupQuestion } from "@bsv/overlay"
 import type{ Topic, Post, Reply, Reaction } from "./types.js"
@@ -12,9 +12,8 @@ let query = {
 let question = {
     service: constants.lookupService,
     query: query} as LookupQuestion
-    const walletclient = new WalletClient()
-    const network = await walletclient.getNetwork()
-    const resolver = new LookupResolver({ networkPreset: location.hostname === 'localhost' ? "local": network })
+    const resolver = new LookupResolver({networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",})
     const lookupResult = await resolver.query(question)
 
     if(lookupResult.type !== 'output-list'){
@@ -49,9 +48,8 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
     let question = {
         service: constants.lookupService,
         query: query} as LookupQuestion
-        const walletclient = new WalletClient()
-        const network = await walletclient.getNetwork()
-        const resolver = new LookupResolver({ networkPreset: location.hostname === 'localhost' ? "local": network })
+        const resolver = new LookupResolver({ networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet", })
         const lookupResult = await resolver.query(question)
     
         if(lookupResult.type !== 'output-list'){
@@ -88,9 +86,8 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
     let question = {
         service: 'ls_forumls_test_forum_1',
         query: query} as LookupQuestion
-        const walletclient = new WalletClient()
-        const network = await walletclient.getNetwork()
-        const resolver = new LookupResolver({ networkPreset: location.hostname === 'localhost' ? "local": network })
+        const resolver = new LookupResolver({ networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet", })
         const lookupResult = await resolver.query(question)
         
         if(lookupResult.type !== 'output-list'){
