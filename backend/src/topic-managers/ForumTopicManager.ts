@@ -141,7 +141,9 @@ export default class ForumTopicManager implements TopicManager {
   async checkPost(fields: number[][]) {
     try {
 
-      if (fields.length !== 8) {
+      console.log("fields", fields)
+
+      if (fields.length !== 9) {
         console.log("Invalid post fields length");
         return false
       }

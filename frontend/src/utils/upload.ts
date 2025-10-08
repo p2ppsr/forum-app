@@ -219,6 +219,7 @@ export async function uploadReaction({
     Utils.toArray(directParentTxid, "utf8"),
     Utils.toArray(reaction, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
+    []
   ];
 
   const lockingScript = await pushdrop.lock(

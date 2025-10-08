@@ -3,23 +3,26 @@ import { AppBar, Box, Container, CssBaseline, Tab, Tabs, Toolbar, Typography } f
 import Upload from "./Upload";
 import TopicsPage from "./pages/Topics";
 import TopicPosts from "./pages/TopicPosts";
+import UploadPost from "./pages/UploadPost";
 import type {Topic , Post} from "./utils/types";
 import { fetchAllTopics } from "./utils/forumFetches";
+function getRouteFromHash(): "home" | "upload" | "topic" | "post" {
+  const raw = window.location.hash.replace("#/", "");
+  const path = raw.split("?")[0];
+  return (path === "upload" || path === "topic" || path === "post") ? (path as any) : "home";
+}
+
 export default function App() {
   const [tab, setTab] = useState(0);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [route, setRoute] = useState<"home" | "upload" | "topic">(() => {
-    const r = window.location.hash.replace("#/", "");
-    return (r === "upload" || r === "topic") ? (r as any) : "home";
-  });
+  const [route, setRoute] = useState<"home" | "upload" | "topic" | "post">(() => getRouteFromHash());
 
   useEffect(() => {
     loadTopics();
   }, []);
   useEffect(() => {
     const onHash = () => {
-      const r = window.location.hash.replace("#/", "");
-      setRoute((r === "upload" || r === "topic") ? (r as any) : "home");
+      setRoute(getRouteFromHash());
     };
     window.addEventListener("hashchange", onHash);
     onHash();
@@ -38,7 +41,8 @@ export default function App() {
   const title = useMemo(() => {
     if (route === "home") return "Home";
     if (route === "upload") return "Create Topic";
-    return "Thread";
+    if (route === "topic") return "Thread";
+    return "Create Post";
   }, [route]);
 
   const demoPosts: Post[] = useMemo(() => ([
@@ -72,7 +76,10 @@ export default function App() {
             <Upload onTopicCreated={handleAddTopic} />
           )}
           {route === "topic" && (
-            <TopicPosts posts={demoPosts} onCreatePostClick={() => { /* wire later */ }} />
+            <TopicPosts posts={demoPosts} onCreatePostClick={() => { window.location.hash = "/post?topic=DEFAULT"; }} />
+          )}
+          {route === "post" && (
+            <UploadPost />
           )}
         </Container>
       </Box>
