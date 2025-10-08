@@ -84,7 +84,7 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
         paramter: post_txid
     } as forumQuery
     let question = {
-        service: 'ls_forumls_test_forum_1',
+        service: constants.lookupService,
         query: query} as LookupQuestion
         const resolver = new LookupResolver({ networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet", })
