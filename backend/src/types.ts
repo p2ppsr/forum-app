@@ -5,6 +5,7 @@ export interface ForumRecord {
   createdAt: Date   // Used as an example
   topicID?: string  // Used as an example
   parent_postID?: string
+  topicTitle?: string
 }
 
 // Used to identify a UTXO that is admitted by the Topic Manager
@@ -20,5 +21,5 @@ export interface Metadata {
 
 export interface forumQuery {
   query: string
-  parameters?: any
+  parameter?: any
 }

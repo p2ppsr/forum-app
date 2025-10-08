@@ -44,7 +44,7 @@ export class ForumLookupService implements LookupService {
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'topic' )
       {
-        await this.storage.storeRecord(txid, outputIndex, 'topic', {field1: ''} )
+        await this.storage.storeRecord(txid, outputIndex, 'topic', {field1: Utils.toUTF8(Utils.toArray(fields[2]))} )
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reaction' )
       {
@@ -88,8 +88,8 @@ export class ForumLookupService implements LookupService {
    * @returns A promise that resolves to a lookup answer or formula
    */
   async lookup(question: LookupQuestion): Promise<LookupAnswer | LookupFormula> {
-      const {query, parameters } = question.query as forumQuery
-
+      const {query, parameter } = question.query as forumQuery
+      console.log('Received query:', query, 'with parameter:', parameter, 'question:', question);
       // Validate query presence
       if (!query) {
         throw new Error('A valid query must be provided!');
@@ -100,19 +100,23 @@ export class ForumLookupService implements LookupService {
       }
 
       // Handle specific queries
+      if(query === 'getTopic' && parameter )
+      {
+          return await this.storage.findTopic(parameter)
+      }
       if (query === 'getAllTopics') {
         return await this.storage.findAlltopics()
       }  
-      if(query === 'getPost' && parameters && parameters.post_txid)
+      if(query === 'getPost' && parameter )
       {
-         return await this.storage.findPost(parameters.post_txid)
+         return await this.storage.findPost(parameter)
       }
-      if(query === 'getAllPosts' && parameters && parameters.parent_post_txid)
+      if(query === 'getAllPosts' && parameter)
       {
-          return await this.storage.findAllPost(parameters.parent_post_txid)
+          return await this.storage.findAllPost(parameter)
       }
 
-      throw new Error('Unknown query type');
+      throw new Error('Unknown query type: ' + query + ' with parameter: ' + parameter);
     }
 
   /** Overlay docs. */

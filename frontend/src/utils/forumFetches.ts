@@ -7,7 +7,7 @@ import constants from "../constants.js"
 export async function fetchAllTopics(): Promise<Topic[]> {
 let query = {
     query: 'getAllTopics',
-    parameters: {}
+    paramter: {}
 } as forumQuery
 let question = {
     service: constants.lookupService,
@@ -43,7 +43,7 @@ let question = {
 export async function fetchAllPosts(topicID: string): Promise<Post[]> {
     let query = {
         query: 'getAllPosts',
-        parameters: topicID
+        paramter: topicID
     } as forumQuery
     let question = {
         service: constants.lookupService,
@@ -81,7 +81,7 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
 export async function fetchPost(post_txid: string): Promise<{post: Post | null, replies: Reply[], reactions: Reaction[]}> {
     let query = {
         query: 'getPost',
-        parameters: post_txid
+        paramter: post_txid
     } as forumQuery
     let question = {
         service: 'ls_forumls_test_forum_1',
