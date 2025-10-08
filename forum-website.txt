@@ -14,9 +14,9 @@ topic_txid
 title
 body
 created_at
-edited_at
 created_by
 tags
+pre_edit_txid
 
 
 Replies
@@ -26,17 +26,17 @@ parent_post_txid
 parent_reply_id
 body
 created_at
-edited_at
 created_by
-
+pre_edit_txid
 
 Reaction
 
 type
-p_r_txid
-body
-created_by
 parent_post_txid
+direct_parent_txid
+reaction
+created_by
+
 
 
 

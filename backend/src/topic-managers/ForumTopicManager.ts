@@ -42,6 +42,22 @@ export default class ForumTopicManager implements TopicManager {
               : console.log("Invalid post")
             continue
           }
+
+          // Check if the output is a reply
+          if (Utils.toUTF8(Utils.toArray(fields[0])) === "reply") {
+            (await this.checkReply(fields))
+              ? admissibleOutputs.push(index)
+              : console.log("Invalid reply")
+            continue
+          }
+
+          // Check if the output is a reaction
+          if (Utils.toUTF8(Utils.toArray(fields[0])) === "reaction") {
+            (await this.checkReaction(fields))
+              ? admissibleOutputs.push(index)
+              : console.log("Invalid reaction")
+            continue
+          }
         } catch (error) {
           continue
         }
@@ -125,13 +141,13 @@ export default class ForumTopicManager implements TopicManager {
   async checkPost(fields: number[][]) {
     try {
 
-      if (fields.length !== 7) {
+      if (fields.length !== 8) {
         console.log("Invalid post fields length");
         return false
       }
 
       if (fields[1].length === 0) {
-        console.log("Invalid post topic_txid");
+        console.log("Invalid post topic txid");
         return false
       }
 
@@ -145,9 +161,7 @@ export default class ForumTopicManager implements TopicManager {
         return false
       }
 
-      // No check for tags
-
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10)
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[4])), 10)
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
@@ -157,13 +171,97 @@ export default class ForumTopicManager implements TopicManager {
       }
       
       try {
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])))
+      } catch {
+        console.log('Invalid public key format.')
+        return false
+      }
+
+      // No check for tags
+      // No check for pre-edit txid
+    } catch (error) {
+      console.error("Error checking post", error);
+      return false
+    }
+
+    return true
+  }
+
+  async checkReply(fields: number[][]) {
+    try {
+
+      if (fields.length !== 7) {
+        console.log("Invalid reply fields length");
+        return false
+      }
+
+      if (fields[1].length === 0) {
+        console.log("Invalid reply post txid");
+        return false
+      }
+
+      // No check for parent reply id
+
+      if (fields[3].length === 0) {
+        console.log("Invalid reply body");
+        return false
+      }
+
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10)
+      const now = Date.now();
+      const thirtyMin = 30 * 60 * 1000;
+
+      if (Number.isNaN(createdAt) || createdAt > now || createdAt < now - thirtyMin) {
+        console.log("Invalid reply created_at");
+        return false
+      }
+      
+      try {
         PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])))
       } catch {
         console.log('Invalid public key format.')
         return false
       }
+
+      // No check for pre-edit txid
     } catch (error) {
-      console.error("Error checking post", error);
+      console.error("Error checking reply", error);
+      return false
+    }
+
+    return true
+  }
+
+  async checkReaction(fields: number[][]) {
+    try {
+      if (fields.length !== 5) {
+        console.log("Invalid reaction fields length");
+        return false
+      }
+
+      if (fields[1].length === 0) {
+        console.log("Invalid reaction parent post txid");
+        return false
+      }
+
+      if (fields[2].length === 0) {
+        console.log("Invalid reaction direct parent txid");
+        return false
+      }
+
+      if (fields[3].length === 0) {
+        console.log("Invalid reaction reaction");
+        return false
+      }
+
+      try {
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])))
+      } catch {
+        console.log('Invalid public key format.')
+        return false
+      }
+    } catch (error) {
+      console.error("Error checking reaction", error);
       return false
     }
 

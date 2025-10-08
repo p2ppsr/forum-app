@@ -1,4 +1,11 @@
-import { Utils, WalletClient, PushDrop, GlobalKVStore, TopicBroadcaster, Transaction } from "@bsv/sdk";
+import {
+  Utils,
+  WalletClient,
+  PushDrop,
+  GlobalKVStore,
+  TopicBroadcaster,
+  Transaction,
+} from "@bsv/sdk";
 import constants from "../constants";
 
 const wallet = new WalletClient("auto", "localhost");
@@ -7,16 +14,17 @@ const pushdrop = new PushDrop(wallet);
 export async function uploadTopic({
   title,
   description,
-  setStatusText
+  setStatusText,
 }: {
   title: string;
   description: string;
-  setStatusText: (text: string) => void
+  setStatusText: (text: string) => void;
 }) {
-  const type = "topic"
+  const type = "topic";
 
   const createdAt = Date.now();
-  const createdBy = (await wallet.getPublicKey({ identityKey: true })).publicKey;
+  const createdBy = (await wallet.getPublicKey({ identityKey: true }))
+    .publicKey;
 
   const fields = [
     Utils.toArray(type, "utf8"),
@@ -50,40 +58,45 @@ export async function uploadTopic({
   });
 
   if (!tx) {
-    throw new Error("Error creating action")
+    throw new Error("Error creating action");
   }
-  const broadcaster = new TopicBroadcaster([constants.topicManager], { 
-    networkPreset: window.location.hostname === 'localhost' ? 'local' : 'mainnet'
-  })
-  const backendResponse = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
+  const broadcaster = new TopicBroadcaster([constants.topicManager], {
+    networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",
+  });
+  const backendResponse = await broadcaster.broadcast(
+    Transaction.fromAtomicBEEF(tx)
+  );
 
-  return
+  return;
 }
 
 export async function uploadPost({
   topicTxid,
   title,
   body,
-  tags
+  tags,
 }: {
-  topicTxid: string
-  title: string
-  body: string
-  tags: string[]
+  topicTxid: string;
+  title: string;
+  body: string;
+  tags: string[];
 }) {
-  const type = "post"
+  const type = "post";
 
   const createdAt = Date.now();
-  const createdBy = (await wallet.getPublicKey({ identityKey: true })).publicKey;
+  const createdBy = (await wallet.getPublicKey({ identityKey: true }))
+    .publicKey;
 
   const fields = [
     Utils.toArray(type, "utf8"),
     Utils.toArray(topicTxid, "utf8"),
     Utils.toArray(title, "utf8"),
     Utils.toArray(body, "utf8"),
-    Utils.toArray(tags.join(","), "utf8"),
     Utils.toArray("" + createdAt, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
+    Utils.toArray(tags.join(","), "utf8"),
+    [],
   ];
 
   const lockingScript = await pushdrop.lock(
@@ -110,12 +123,137 @@ export async function uploadPost({
   });
 
   if (!tx) {
-    throw new Error("Error creating action")
+    throw new Error("Error creating action");
   }
-  const broadcaster = new TopicBroadcaster([constants.topicManager], { 
-    networkPreset: window.location.hostname === 'localhost' ? 'local' : 'mainnet'
-  })
-  const backendResponse = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
+  const broadcaster = new TopicBroadcaster([constants.topicManager], {
+    networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",
+  });
+  const backendResponse = await broadcaster.broadcast(
+    Transaction.fromAtomicBEEF(tx)
+  );
 
-  return
+  return;
+}
+
+export async function uploadReply({
+  postTxid,
+  parentReplyId,
+  body,
+}: {
+  postTxid: string;
+  parentReplyId: string;
+  body: string;
+}) {
+  const type = "reply";
+
+  const createdAt = Date.now();
+  const createdBy = (await wallet.getPublicKey({ identityKey: true }))
+    .publicKey;
+
+  const fields = [
+    Utils.toArray(type, "utf8"),
+    Utils.toArray(postTxid, "utf8"),
+    Utils.toArray(parentReplyId, "utf8"),
+    Utils.toArray(body, "utf8"),
+    Utils.toArray("" + createdAt, "utf8"),
+    Utils.toArray("" + createdBy, "utf8"),
+    []
+  ];
+
+  const lockingScript = await pushdrop.lock(
+    fields,
+    [constants.securityProtocol, constants.protocolId],
+    "1",
+    "anyone",
+    true
+  );
+
+  const { txid, tx } = await wallet.createAction({
+    outputs: [
+      {
+        lockingScript: lockingScript.toHex(),
+        satoshis: 1,
+        outputDescription: "Uploading a reply to forum",
+      },
+    ],
+    description: "Publish a reply",
+    options: {
+      acceptDelayedBroadcast: false,
+      randomizeOutputs: false,
+    },
+  });
+
+  if (!tx) {
+    throw new Error("Error creating action");
+  }
+  const broadcaster = new TopicBroadcaster([constants.topicManager], {
+    networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",
+  });
+  const backendResponse = await broadcaster.broadcast(
+    Transaction.fromAtomicBEEF(tx)
+  );
+
+  return;
+}
+
+export async function uploadReaction({
+  parentPostTxid,
+  directParentTxid,
+  reaction,
+}: {
+  parentPostTxid: string;
+  directParentTxid: string;
+  reaction: string;
+}) {
+  const type = "reaction";
+
+  const createdAt = Date.now();
+  const createdBy = (await wallet.getPublicKey({ identityKey: true }))
+    .publicKey;
+
+  const fields = [
+    Utils.toArray(type, "utf8"),
+    Utils.toArray(parentPostTxid, "utf8"),
+    Utils.toArray(directParentTxid, "utf8"),
+    Utils.toArray(reaction, "utf8"),
+    Utils.toArray("" + createdBy, "utf8"),
+  ];
+
+  const lockingScript = await pushdrop.lock(
+    fields,
+    [constants.securityProtocol, constants.protocolId],
+    "1",
+    "anyone",
+    true
+  );
+
+  const { txid, tx } = await wallet.createAction({
+    outputs: [
+      {
+        lockingScript: lockingScript.toHex(),
+        satoshis: 1,
+        outputDescription: "Uploading a reaction to forum",
+      },
+    ],
+    description: "Publish a reaction",
+    options: {
+      acceptDelayedBroadcast: false,
+      randomizeOutputs: false,
+    },
+  });
+
+  if (!tx) {
+    throw new Error("Error creating action");
+  }
+  const broadcaster = new TopicBroadcaster([constants.topicManager], {
+    networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",
+  });
+  const backendResponse = await broadcaster.broadcast(
+    Transaction.fromAtomicBEEF(tx)
+  );
+
+  return;
 }
