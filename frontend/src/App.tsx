@@ -22,7 +22,6 @@ export default function App() {
       setRoute((r === "upload" || r === "topic") ? (r as any) : "home");
     };
     window.addEventListener("hashchange", onHash);
-    // normalize initial
     onHash();
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -43,8 +42,8 @@ export default function App() {
   }, [route]);
 
   const demoPosts: Post[] = useMemo(() => ([
-    { id: "p1", type: 'Post', topicID:'Some-Random-utxo',  title: "Welcome to the thread", body: "This is a demo post body.", created_at: '390432094', tags: ["demo", "welcome"] },
-    { id: "p2", type: 'Post', topicID:'Some-Random-utxo', title: "Second post", body: "Another example post.", created_at: '205478934', tags: ["example"] },
+    { id: "p1", type: 'Post', topicId:'Some-Random-utxo',  title: "Welcome to the thread", body: "This is a demo post body.", createdAt: '390432094', tags: ["demo", "welcome"] },
+    { id: "p2", type: 'Post', topicId:'Some-Random-utxo', title: "Second post", body: "Another example post.", createdAt: '205478934', tags: ["example"] },
   ]), []);
 
   return (

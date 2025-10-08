@@ -3,7 +3,7 @@ import type{Topic} from "../utils/types";
 
 
 export default function TopicCard({ topic }: { topic: Topic }) {
-  const date = new Date(topic.created_at);
+  const date = new Date(topic.createdAt);
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>
       <CardHeader

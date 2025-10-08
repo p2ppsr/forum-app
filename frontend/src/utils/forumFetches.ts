@@ -35,8 +35,8 @@ let question = {
             type: type,
             title: Utils.toUTF8(Utils.toArray(fields[1])),
             description: Utils.toUTF8(Utils.toArray(fields[2])),
-            created_at: Utils.toUTF8(fields[3]),
-            created_by: Utils.toUTF8(Utils.toArray(fields[4])),
+            createdAt: Utils.toUTF8(fields[3]),
+            createdBy: Utils.toUTF8(Utils.toArray(fields[4])),
         })
     }
     return topics
@@ -58,7 +58,7 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
             throw new Error('Unexpected response from lookup service')
         }
     
-        let posts = [] 
+        let posts: Post[] = [] 
         for(const output of lookupResult.outputs){
             const parsedTransaction = await Transaction.fromBEEF(output.beef)
             const decodedOutput = await PushDrop.decode(parsedTransaction.outputs[0].lockingScript)
@@ -70,11 +70,11 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
             posts.push({
                 id: parsedTransaction.id('hex'),
                 type: type,
-                topicID: Utils.toUTF8(Utils.toArray(fields[1])),
+                topicId: Utils.toUTF8(Utils.toArray(fields[1])),
                 title: Utils.toUTF8(Utils.toArray(fields[2])),
                 body: Utils.toUTF8(Utils.toArray(fields[3])),
-                created_at: Utils.toUTF8(fields[4]),
-                created_by: Utils.toUTF8(Utils.toArray(fields[5])),
+                createdAt: Utils.toUTF8(fields[4]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
                 tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
             })
         }
@@ -108,11 +108,11 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
             post = {
                 id: parsedTransaction.id('hex'),
                 type: type,
-                topicID: Utils.toUTF8(Utils.toArray(fields[1])),
+                topicId: Utils.toUTF8(Utils.toArray(fields[1])),
                 title: Utils.toUTF8(Utils.toArray(fields[2])),
                 body: Utils.toUTF8(Utils.toArray(fields[3])),
-                created_at: Utils.toUTF8(fields[4]),
-                created_by: Utils.toUTF8(Utils.toArray(fields[5])),
+                createdAt: Utils.toUTF8(fields[4]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
                 tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
             }
         }
@@ -120,21 +120,21 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
             replies.push( {
                 id: parsedTransaction.id('hex'),
                 type: type,
-                parent_postID: Utils.toUTF8(Utils.toArray(fields[2])),
-                parent_replyID: Utils.toUTF8(Utils.toArray(fields[3])),
+                parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
+                parentReplyId: Utils.toUTF8(Utils.toArray(fields[3])),
                 body: Utils.toUTF8(Utils.toArray(fields[4])),
-                created_at: Utils.toUTF8(fields[5]),
-                created_by: Utils.toUTF8(Utils.toArray(fields[6])),
+                createdAt: Utils.toUTF8(fields[5]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[6])),
             })
         }
         else if(type === 'reaction'){
             reactions.push( {
                 id: parsedTransaction.id('hex'),
                 type: type,
-                p_r_txid: Utils.toUTF8(Utils.toArray(fields[3])),
-                body: Utils.toUTF8(Utils.toArray(fields[4])),
-                created_by: Utils.toUTF8(Utils.toArray(fields[5])),
-                parent_postID: Utils.toUTF8(Utils.toArray(fields[6])),
+                directParentTxid: Utils.toUTF8(Utils.toArray(fields[2])),
+                body: Utils.toUTF8(Utils.toArray(fields[3])),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[4])),
+                parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
             })
         }
         else{

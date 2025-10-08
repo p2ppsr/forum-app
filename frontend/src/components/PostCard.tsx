@@ -3,7 +3,7 @@ import type { Post } from "../utils/types";
 
 
 export default function PostCard({ post }: { post: Post }) {
-  const date = new Date(post.created_at);
+  const date = new Date(post.createdAt);
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>
       <CardHeader
