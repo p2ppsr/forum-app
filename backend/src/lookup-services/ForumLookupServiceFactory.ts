@@ -47,9 +47,6 @@ export class ForumLookupService implements LookupService {
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reaction' )
       {
-        let f1 = Utils.toUTF8(Utils.toArray(fields[1]))
-        let f2 = Utils.toUTF8(Utils.toArray(fields[2]))
-        console.log('Storing reaction', f1, f2)
         await this.storage.storeRecord(txid, outputIndex, 'reaction', {field1: Utils.toUTF8(Utils.toArray(fields[1])), field2: Utils.toUTF8(Utils.toArray(fields[2])) })
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reply' )

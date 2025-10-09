@@ -2,7 +2,7 @@ import { Card, CardActionArea, CardActions, CardContent, CardHeader, Chip, Butto
 import type { Post, Reaction, PostContext } from "../utils/types";
 import { useEffect, useMemo, useState } from "react";
 import type React from "react";
-import { fetchPost } from "../utils/forumFetches";
+// import { fetchPost } from "../utils/forumFetches";
 import { uploadReaction } from "../utils/upload";
 
 export default function PostCard({ postContext, clickable = true, truncateBody = true }: { postContext: PostContext; clickable?: boolean; truncateBody?: boolean }) {
@@ -26,8 +26,8 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
     let alive = true;
     (async () => {
       try {
-        const { reactions } = await fetchPost(postContext.post.id);
-        const count = reactions.filter(r => (r.body || "").toLowerCase() === "like").length;
+        // const { reactions } = await fetchPost(postContext.post.id);
+        const count = postContext.reactions.filter(r => (r.body || "").toLowerCase() === "like").length;
         if (alive) setLikeCount(count);
       } catch {
         console.error("Failed to fetch post reactions");
