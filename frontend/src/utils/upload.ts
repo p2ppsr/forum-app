@@ -189,7 +189,7 @@ export async function uploadReply({
   console.log(`parentReplyId: ${parentReplyId}`);
   console.log(`body: ${body}`);
   console.log(`createdAt: ${createdAt}`);
-  console.log(`createdBy: ${createdBy}`);
+  (`createdBy: ${createdBy}`);
 
   if (!tx) {
     throw new Error("Error creating action");

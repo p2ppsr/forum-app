@@ -48,8 +48,6 @@ export default function PostReply() {
       setError(null);
       try {
         const { post, reactions, replies } = await fetchPost(postTxid);
-
-        console.log(replies)
         
         if (alive) {setPost(post)
           setReplies(replies);

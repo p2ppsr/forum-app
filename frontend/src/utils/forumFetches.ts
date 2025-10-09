@@ -153,11 +153,11 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
             replies.push( {
                 id: parsedTransaction.id('hex'),
                 type: type,
-                parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
-                parentReplyId: Utils.toUTF8(Utils.toArray(fields[3])),
-                body: Utils.toUTF8(Utils.toArray(fields[4])),
-                createdAt: Utils.toUTF8(fields[5]),
-                createdBy: Utils.toUTF8(Utils.toArray(fields[6])),
+                parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
+                parentReplyId: Utils.toUTF8(Utils.toArray(fields[2])),
+                body: Utils.toUTF8(Utils.toArray(fields[3])),
+                createdAt: Utils.toUTF8(fields[4]),
+                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
             })
         }
         else if(type === 'reaction'){
