@@ -158,7 +158,7 @@ export async function uploadReply({
     Utils.toArray(body, "utf8"),
     Utils.toArray("" + createdAt, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
-    []
+    [],
   ];
 
   const lockingScript = await pushdrop.lock(
@@ -199,10 +199,12 @@ export async function uploadReply({
 }
 
 export async function uploadReaction({
+  topic_txid,
   parentPostTxid,
   directParentTxid,
   reaction,
 }: {
+  topic_txid: string;
   parentPostTxid: string;
   directParentTxid: string;
   reaction: string;
@@ -214,11 +216,11 @@ export async function uploadReaction({
 
   const fields = [
     Utils.toArray(type, "utf8"),
+    Utils.toArray(topic_txid, "utf8"),
     Utils.toArray(parentPostTxid, "utf8"),
     Utils.toArray(directParentTxid, "utf8"),
     Utils.toArray(reaction, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
-    []
   ];
 
   const lockingScript = await pushdrop.lock(

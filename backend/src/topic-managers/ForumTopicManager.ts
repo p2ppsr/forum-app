@@ -31,35 +31,35 @@ export default class ForumTopicManager implements TopicManager {
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "topic") {
             (await this.checkTopic(fields))
               ? admissibleOutputs.push(index)
-              : console.log("Invalid topic")
-            continue
+              : console.log("Invalid topic");
+            continue;
           }
 
           // Check if the output is a post
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "post") {
             (await this.checkPost(fields))
               ? admissibleOutputs.push(index)
-              : console.log("Invalid post")
-            continue
+              : console.log("Invalid post");
+            continue;
           }
 
           // Check if the output is a reply
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "reply") {
             (await this.checkReply(fields))
               ? admissibleOutputs.push(index)
-              : console.log("Invalid reply")
-            continue
+              : console.log("Invalid reply");
+            continue;
           }
 
           // Check if the output is a reaction
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "reaction") {
             (await this.checkReaction(fields))
               ? admissibleOutputs.push(index)
-              : console.log("Invalid reaction")
-            continue
+              : console.log("Invalid reaction");
+            continue;
           }
         } catch (error) {
-          continue
+          continue;
         }
       }
     } catch (error) {
@@ -69,7 +69,7 @@ export default class ForumTopicManager implements TopicManager {
     return {
       outputsToAdmit: admissibleOutputs,
       coinsToRetain: [],
-    }
+    };
   }
 
   /**
@@ -77,7 +77,7 @@ export default class ForumTopicManager implements TopicManager {
    * @returns A promise that resolves to a string containing the documentation
    */
   async getDocumentation(): Promise<string> {
-    return docs
+    return docs;
   }
 
   /**
@@ -94,182 +94,195 @@ export default class ForumTopicManager implements TopicManager {
     return {
       name: "Forum Topic Manager",
       shortDescription: "Admit outputs into a topic",
-    }
+    };
   }
 
   async checkTopic(fields: number[][]) {
     try {
-
       if (fields.length !== 6) {
         console.log("Invalid topic fields length");
-        return false
+        return false;
       }
 
-
-      const titleStr = Utils.toUTF8(Utils.toArray(fields[1]))
-      const allowed = /^[A-Za-z0-9_-]+$/
+      const titleStr = Utils.toUTF8(Utils.toArray(fields[1]));
+      const allowed = /^[A-Za-z0-9_-]+$/;
       if (!allowed.test(titleStr)) {
-        console.log("Invalid topic name")
-        return false
+        console.log("Invalid topic name");
+        return false;
       }
 
       if (fields[2].length === 0) {
         console.log("Invalid topic description");
-        return false
+        return false;
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[3])), 10)
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[3])), 10);
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
-      if (Number.isNaN(createdAt) || createdAt > now || createdAt < now - thirtyMin) {
+      if (
+        Number.isNaN(createdAt) ||
+        createdAt > now ||
+        createdAt < now - thirtyMin
+      ) {
         console.log("Invalid topic created_at");
-        return false
+        return false;
       }
-      
+
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])));
       } catch {
-        console.log('Invalid public key format.')
-        return false
+        console.log("Invalid public key format.");
+        return false;
       }
     } catch (error) {
       console.error("Error checking topic", error);
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 
   async checkPost(fields: number[][]) {
     try {
-
-      console.log("fields", fields)
+      console.log("fields", fields);
 
       if (fields.length !== 9) {
         console.log("Invalid post fields length");
-        return false
+        return false;
       }
 
       if (fields[1].length === 0) {
         console.log("Invalid post topic txid");
-        return false
+        return false;
       }
 
       if (fields[2].length === 0) {
         console.log("Invalid post title");
-        return false
+        return false;
       }
 
       if (fields[3].length === 0) {
         console.log("Invalid post body");
-        return false
+        return false;
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[4])), 10)
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[4])), 10);
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
-      if (Number.isNaN(createdAt) || createdAt > now || createdAt < now - thirtyMin) {
+      if (
+        Number.isNaN(createdAt) ||
+        createdAt > now ||
+        createdAt < now - thirtyMin
+      ) {
         console.log("Invalid post created_at");
-        return false
+        return false;
       }
-      
+
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])));
       } catch {
-        console.log('Invalid public key format.')
-        return false
+        console.log("Invalid public key format.");
+        return false;
       }
 
       // No check for tags
       // No check for pre-edit txid
     } catch (error) {
       console.error("Error checking post", error);
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 
   async checkReply(fields: number[][]) {
     try {
-
       if (fields.length !== 7) {
         console.log("Invalid reply fields length");
-        return false
+        return false;
       }
 
       if (fields[1].length === 0) {
         console.log("Invalid reply post txid");
-        return false
+        return false;
       }
 
       // No check for parent reply id
 
       if (fields[3].length === 0) {
         console.log("Invalid reply body");
-        return false
+        return false;
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10)
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10);
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
-      if (Number.isNaN(createdAt) || createdAt > now || createdAt < now - thirtyMin) {
+      if (
+        Number.isNaN(createdAt) ||
+        createdAt > now ||
+        createdAt < now - thirtyMin
+      ) {
         console.log("Invalid reply created_at");
-        return false
+        return false;
       }
-      
+
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])));
       } catch {
-        console.log('Invalid public key format.')
-        return false
+        console.log("Invalid public key format.");
+        return false;
       }
 
       // No check for pre-edit txid
     } catch (error) {
       console.error("Error checking reply", error);
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 
   async checkReaction(fields: number[][]) {
     try {
-      if (fields.length !== 5) {
+      if (fields.length !== 7) {
         console.log("Invalid reaction fields length");
-        return false
+        return false;
       }
 
       if (fields[1].length === 0) {
-        console.log("Invalid reaction parent post txid");
-        return false
+        console.log("Invalid reaction topic txid");
+        return false;
       }
 
       if (fields[2].length === 0) {
-        console.log("Invalid reaction direct parent txid");
-        return false
+        console.log("Invalid reaction parent post txid");
+        return false;
       }
 
       if (fields[3].length === 0) {
+        console.log("Invalid reaction direct parent txid");
+        return false;
+      }
+
+      if (fields[4].length === 0) {
         console.log("Invalid reaction reaction");
-        return false
+        return false;
       }
 
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])))
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])));
       } catch {
-        console.log('Invalid public key format.')
-        return false
+        console.log("Invalid public key format.");
+        return false;
       }
     } catch (error) {
       console.error("Error checking reaction", error);
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 }

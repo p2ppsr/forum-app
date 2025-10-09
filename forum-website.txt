@@ -32,6 +32,7 @@ pre_edit_txid
 Reaction
 
 type
+topic_txid
 parent_post_txid
 direct_parent_txid
 reaction

@@ -39,7 +39,7 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
     if (liking) return;
     try {
       setLiking(true);
-      await uploadReaction({ parentPostTxid: post.id, directParentTxid: post.id, reaction: "like" });
+      await uploadReaction({ topic_txid: post.topicId, parentPostTxid: post.id, directParentTxid: post.id, reaction: "like" });
       setLikeCount(c => c + 1);
     } catch {
       // swallow for now
