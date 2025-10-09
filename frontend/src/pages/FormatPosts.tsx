@@ -1,16 +1,16 @@
 import { Stack } from "@mui/material";
 import PostCard from "../components/PostCard";
-import type { Post } from "../utils/types";
+import type { Post, PostContext } from "../utils/types";
 
 type Props = {
-  posts: Post[];
+  posts: PostContext[];
 };
 
 export default function FormatPosts({ posts }: Props) {
   return (
     <Stack spacing={2}>
       {posts.map((p) => (
-        <PostCard key={p.id} post={p} />
+        <PostCard key={p.post.id} postContext={p} clickable={true}/>
       ))}
     </Stack>
   );

@@ -1,6 +1,6 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import FormatPosts from "./FormatPosts";
-import type { Post, Topic } from "../utils/types";
+import type { Post, Topic, PostContext } from "../utils/types";
 import { useEffect, useState } from "react";
 import { topicExists } from "../utils/topicExists";
 import { fetchAllPosts } from "../utils/forumFetches";
@@ -20,7 +20,7 @@ export default function TopicPosts({
     window.location.hash.replace(/^#\//, "").split("?")[0] || ""
   );
 
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostContext[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -41,6 +41,7 @@ export default function TopicPosts({
           if (alive) setPosts([]);
           return;
         }
+        console.log("Loading posts for topic txid:", txid);
         const data = await fetchAllPosts(txid);
         if (alive) setPosts(data);
       } catch {

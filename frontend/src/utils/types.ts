@@ -2,6 +2,11 @@ export interface forumQuery {
   query: 'getAllTopics' | 'getPost' | 'getAllPosts' | 'getTopic' 
   parameter?: string
 }
+export interface PostContext{
+  post: Post;
+  reactions: Reaction[];
+}
+
 export interface Topic {
   id: string
   type: string

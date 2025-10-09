@@ -49,7 +49,8 @@ export class ForumStorage {
           txid,
           outputIndex,
           createdAt: new Date(),
-          parent_postID: metadata.field2
+          parent_postID: metadata.field2,
+          topicID: metadata.field1
         })
       break
       case 'reply':
@@ -88,13 +89,21 @@ export class ForumStorage {
    * @returns {Promise<UTXOReference[]>} - Resolves with an array of UTXO references
    */
   async findAllPost(topicID: string): Promise<UTXOReference[]> {
-    return await this.posts.find({topicID: topicID})
-      .project<UTXOReference>({ txid: 1, outputIndex: 1 })
-      .toArray()
-      .then(results => results.map(record => ({
-        txid: record.txid,
-        outputIndex: record.outputIndex
-      })))
+    let utxos = [] as UTXOReference[]
+    console.log('Finding all posts for topicID', topicID)
+    const posts = await this.posts.find({topicID: topicID}).toArray()
+    for(const post of posts)
+    {
+      utxos.push({txid: post.txid, outputIndex: post.outputIndex})
+    }
+    const reactions = await this.reactions.find({topicID: topicID}).toArray()
+    console.log('allReactions', reactions)
+    console.log('Found Reactions', reactions)
+    for(const reaction of reactions)
+    {
+      utxos.push({txid: reaction.txid, outputIndex: reaction.outputIndex})
+    }
+    return utxos
   }
   async findAlltopics(): Promise<UTXOReference[]> {
     const query: any = {}

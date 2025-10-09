@@ -1,11 +1,11 @@
 import { Card, CardActionArea, CardActions, CardContent, CardHeader, Chip, Button, Stack, Typography } from "@mui/material";
-import type { Post } from "../utils/types";
+import type { Post, Reaction, PostContext } from "../utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { fetchPost } from "../utils/forumFetches";
 import { uploadReaction } from "../utils/upload";
 
-export default function PostCard({ post, clickable = true }: { post: Post; clickable?: boolean }) {
-  const date = new Date(post.createdAt);
+export default function PostCard({ postContext, clickable = true }: { postContext: PostContext; clickable?: boolean }) {
+  const date = new Date(postContext.post.createdAt);
   const [likeCount, setLikeCount] = useState<number>(0);
   const [liking, setLiking] = useState<boolean>(false);
 
@@ -24,7 +24,7 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
     let alive = true;
     (async () => {
       try {
-        const { reactions } = await fetchPost(post.id);
+        const { reactions } = await fetchPost(postContext.post.id);
         const count = reactions.filter(r => (r.body || "").toLowerCase() === "like").length;
         if (alive) setLikeCount(count);
       } catch {
@@ -32,14 +32,15 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
       }
     })();
     return () => { alive = false; };
-  }, [post.id]);
+  }, [postContext.post.id]);
 
   const onLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (liking) return;
     try {
       setLiking(true);
-      await uploadReaction({ topic_txid: post.topicId, parentPostTxid: post.id, directParentTxid: post.id, reaction: "like" });
+      console.log('post : ',postContext.post)
+      await uploadReaction({ topic_txid: postContext.post.topicId, parentPostTxid: postContext.post.id, directParentTxid: postContext.post.id, reaction: "like" });
       setLikeCount(c => c + 1);
     } catch {
       // swallow for now
@@ -57,15 +58,15 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
     if (!clickable) return;
     const topic = topicFromHash;
     if (!topic) return;
-    window.location.hash = `/${encodeURIComponent(topic)}/post/${post.id}`;
+    window.location.hash = `/${encodeURIComponent(topic)}/post/${postContext.post.id}`;
   };
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>
       <CardActionArea onClick={onOpenPost}>
         <CardHeader
           title={
-            <Typography variant="h6" noWrap title={post.title}>
-              {post.title}
+            <Typography variant="h6" noWrap title={postContext.post.title}>
+              {postContext.post.title}
             </Typography>
           }
           subheader={date.toLocaleString()}
@@ -75,13 +76,13 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", mb: post.tags?.length ? 1 : 0 }}
+            sx={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", mb: postContext.post.tags?.length ? 1 : 0 }}
           >
-            {post.body}
+            {postContext.post.body}
           </Typography>
-          {(!!post.tags?.length && post.tags.length < 0) && (
+          {(!!postContext.post.tags?.length && postContext.post.tags.length < 0) && (
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-              {post.tags.map((tag) => (
+              {postContext.post.tags.map((tag) => (
                 <Chip key={tag} size="small" label={tag} variant="outlined" />)
               )}
             </Stack>
