@@ -1,32 +1,23 @@
+// components/TopicCard.tsx
 import { Card, CardContent, CardHeader, Typography, CardActionArea, Box } from "@mui/material";
 import type { Topic } from "../utils/types";
 
-const slugify = (s: string) =>
-  s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-
 export default function TopicCard({ topic }: { topic: Topic }) {
-  const created = Number.isFinite(Number(topic.createdAt)) && topic.createdAt.length < 15
-    ? new Date(Number(topic.createdAt)).toLocaleString()
-    : new Date(topic.createdAt).toLocaleString();
-
-  const slug = slugify(topic.title);
+  const created =
+    Number.isFinite(Number(topic.createdAt)) && topic.createdAt.length < 15
+      ? new Date(Number(topic.createdAt)).toLocaleString()
+      : new Date(topic.createdAt).toLocaleString();
 
   return (
     <Card variant="outlined" sx={{ height: "100%" }}>
       <CardActionArea
         component="a"
-        href={`#/${encodeURIComponent(slug)}`}            // -> app/#/your-topic
+        href={`#/${encodeURIComponent(topic.title)}`} // ← exact title in URL
         sx={{ height: "100%", alignItems: "stretch" }}
         aria-label={`Open topic: ${topic.title}`}
       >
         <CardHeader
-          // Title (bold)
-          title={
-            <Typography variant="h6" noWrap title={topic.title} sx={{ fontWeight: 700 }}>
-              {topic.title}
-            </Typography>
-          }
-          // 🔁 Description replaces the old "DEFAULT"
+          title={<Typography variant="h6" noWrap title={topic.title} sx={{ fontWeight: 700 }}>{topic.title}</Typography>}
           subheader={
             <Typography
               variant="body2"
@@ -46,9 +37,7 @@ export default function TopicCard({ topic }: { topic: Topic }) {
           }
           sx={{ pb: 0.5 }}
         />
-
-        <CardContent sx={{ pt: 1.0 }}>
-          {/* Meta line like Reddit: date • author */}
+        <CardContent sx={{ pt: 1 }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
               {created}{topic.createdBy ? ` • by ${topic.createdBy}` : ""}

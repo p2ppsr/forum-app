@@ -1,13 +1,57 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import PostCard from "../components/PostCard";
-import type { Post } from "../utils/types";
+import type { Post, Topic } from "../utils/types";
 
-export default function TopicPosts({ posts = [], onCreatePostClick }: { posts?: Post[]; onCreatePostClick?: () => void }) {
+type Props = {
+  topic?: Topic | null;          // 👈 pass the current topic in
+  posts?: Post[];
+  onCreatePostClick?: () => void;
+};
+
+export default function TopicPosts({ topic, posts = [], onCreatePostClick }: Props) {
+  // Fallback: show the slug from the URL if no topic object provided
+  const urlSlug = decodeURIComponent((window.location.hash.replace(/^#\//, "").split("?")[0]) || "");
+
+  const created =
+    topic?.createdAt
+      ? (Number.isFinite(Number(topic.createdAt)) && topic.createdAt.length < 15
+          ? new Date(Number(topic.createdAt)).toLocaleString()
+          : new Date(topic.createdAt).toLocaleString())
+      : "";
+
   return (
     <Stack spacing={2}>
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">DEFAULT</Typography>
+          {/* Title (from topic if available, else fallback to slug) */}
+          <Box sx={{ minWidth: 0, mr: 2 }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 700, lineHeight: 1.2, wordBreak: "break-word" }}
+              title={topic?.title ?? urlSlug}
+            >
+              {topic?.title ?? urlSlug}
+            </Typography>
+
+            {/* 🔁 Description replaces "DEFAULT" */}
+            {!!topic?.description && (
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mt: 0.5, fontStyle: "italic", whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {topic.description}
+              </Typography>
+            )}
+
+            {/* Meta line */}
+            {!!topic && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                {created}{topic.createdBy ? ` • by ${topic.createdBy}` : ""}
+              </Typography>
+            )}
+          </Box>
+
           <Button variant="contained" onClick={onCreatePostClick}>Create Post</Button>
         </Stack>
       </Paper>
