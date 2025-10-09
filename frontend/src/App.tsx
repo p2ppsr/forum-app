@@ -42,7 +42,10 @@ export default function App() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [route, setRoute] = useState<RouteState>(() => parseHashToRoute(window.location.hash));
 
-  const tab = route.name === "home" ? 0 : route.name === "upload" ? 1 : -1;
+const tabValue: 0 | 1 | false =
+  route.name === "home" ? 0 :
+  route.name === "upload" ? 1 :
+  false;
 
   useEffect(() => { void loadTopics(); }, []);
   useEffect(() => {
@@ -86,8 +89,10 @@ export default function App() {
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>Forum</Typography>
           <Tabs
-            value={tab}
-            onChange={(_, v) => { window.location.hash = v === 0 ? "/home" : "/upload"; }}
+            value={tabValue}
+            onChange={(_, v: 0 | 1) => {
+              window.location.hash = v === 0 ? "/home" : "/upload";
+            }}
             textColor="primary"
             indicatorColor="primary"
           >

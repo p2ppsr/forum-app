@@ -41,7 +41,6 @@ export default function TopicPosts({
           if (alive) setPosts([]);
           return;
         }
-        console.log("Loading posts for topic txid:", txid);
         const data = await fetchAllPosts(txid);
         if (alive) setPosts(data);
       } catch {

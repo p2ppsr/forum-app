@@ -75,7 +75,6 @@ export async function fetchAllPosts(
         createdBy: Utils.toUTF8(Utils.toArray(f[5])),
         tags: f[6] ? Utils.toUTF8(Utils.toArray(f[6])).split(",") : undefined,
     };
-        console.log('Found post for topic', topicID, 'post fields:', post)
         posts.push(post);
     } else if (type === "reaction") {
       const reaction: Reaction = {
@@ -87,7 +86,6 @@ export async function fetchAllPosts(
         createdBy: Utils.toUTF8(Utils.toArray(f[5])),
       };
         
-        console.log('Found reaction for topic', topicID, 'reaction fields:', reaction)
       reactions.push(reaction);
     }
   }
@@ -114,7 +112,6 @@ export async function fetchAllPosts(
     const list = (reactionsByPostId[post.id] ?? []).slice();
     return { post, reactions: list };
   });
-  console.log("fetchAllPosts result:", result);
   return result;
 }
 export async function fetchPost(post_txid: string): Promise<{post: Post | null, replies: Reply[], reactions: Reaction[]}> {
@@ -122,7 +119,6 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
         query: 'getPost',
         parameter: post_txid
     } as forumQuery
-    console.log('fetching post with txid', post_txid)
     let question = {
         service: constants.lookupService,
         query: query} as LookupQuestion
@@ -166,12 +162,12 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
         }
         else if(type === 'reaction'){
             reactions.push( {
-                id: parsedTransaction.id('hex'),
-                type: type,
-                directParentTxid: Utils.toUTF8(Utils.toArray(fields[2])),
-                body: Utils.toUTF8(Utils.toArray(fields[3])),
-                createdBy: Utils.toUTF8(Utils.toArray(fields[4])),
-                parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
+                 id: parsedTransaction.id("hex"),
+                  type,
+                  parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
+                  directParentTxid: Utils.toUTF8(Utils.toArray(fields[3])),
+                  body: Utils.toUTF8(Utils.toArray(fields[4])),
+                  createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
             })
         }
         else{

@@ -42,7 +42,6 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
     if (liking) return;
     try {
       setLiking(true);
-      console.log('post : ',postContext.post)
       await uploadReaction({ topic_txid: postContext.post.topicId, parentPostTxid: postContext.post.id, directParentTxid: postContext.post.id, reaction: "like" });
       setLikeCount(c => c + 1);
     } catch {

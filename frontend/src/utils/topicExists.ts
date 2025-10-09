@@ -6,7 +6,6 @@ import { Transaction } from '@bsv/sdk'
 
 export async function topicExists( topicTitle: string ): Promise<string| undefined> 
 {
-    console.log('titolo esiste:',topicTitle);
     let query = {
     query: 'getTopic',
     parameter: topicTitle

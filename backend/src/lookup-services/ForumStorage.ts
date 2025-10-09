@@ -90,15 +90,12 @@ export class ForumStorage {
    */
   async findAllPost(topicID: string): Promise<UTXOReference[]> {
     let utxos = [] as UTXOReference[]
-    console.log('Finding all posts for topicID', topicID)
     const posts = await this.posts.find({topicID: topicID}).toArray()
     for(const post of posts)
     {
       utxos.push({txid: post.txid, outputIndex: post.outputIndex})
     }
     const reactions = await this.reactions.find({topicID: topicID}).toArray()
-    console.log('allReactions', reactions)
-    console.log('Found Reactions', reactions)
     for(const reaction of reactions)
     {
       utxos.push({txid: reaction.txid, outputIndex: reaction.outputIndex})

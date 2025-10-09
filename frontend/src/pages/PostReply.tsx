@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import type { Post } from "../utils/types";
+import type { Post, Reply, Reaction } from "../utils/types";
 import { fetchPost } from "../utils/forumFetches";
 import PostCard from "../components/PostCard";
 import { uploadReply } from "../utils/upload";
@@ -29,6 +29,8 @@ function parseHash() {
 
 export default function PostReply() {
   const [post, setPost] = useState<Post | null>(null);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<string>("");
@@ -44,8 +46,12 @@ export default function PostReply() {
       setLoading(true);
       setError(null);
       try {
-        const { post } = await fetchPost(postTxid);
-        if (alive) setPost(post);
+        const { post, reactions, replies } = await fetchPost(postTxid);
+        if (alive) {setPost(post)
+          setReplies(replies);
+          setReactions(reactions);
+        };
+
       } catch (e) {
         if (alive) setError("Failed to load post");
       } finally {
@@ -103,7 +109,7 @@ export default function PostReply() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {!!post && (
-        <PostCard postContext={{ post, reactions: [] }} clickable={false} truncateBody={false} />
+        <PostCard postContext={{ post, reactions }} clickable={false} truncateBody={false} />
       )}
 
       <Paper variant="outlined" sx={{ p: 2 }}>

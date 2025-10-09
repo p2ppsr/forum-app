@@ -28,12 +28,12 @@ export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: Topic)
     const createdAt = Date.now();
     try {
       // Inform parent so Home can optimistically show the new topic
-      console.log('trimmed title:',title.trim(), 'pretrimmed title:',title);
       let topicAlreadyExists = await topicExists(title.trim());
       if(topicAlreadyExists === undefined)
       {
         await uploadTopic({ title: title.trim(), description: description.trim(), setStatusText: setStatus });
-        onTopicCreated?.({ id: `temp:${createdAt}`, title: title.trim(), description: description.trim(), createdAt: createdAt.toString(), type:'topic' });
+        
+        onTopicCreated?.({ id: `temp:${createdAt}`, title: title.trim(), description: description.trim(), createdAt: createdAt.toString(), type:'topic', createdBy:''  });
         setStatus("Done.");
         setTitle("");
         setDescription("");

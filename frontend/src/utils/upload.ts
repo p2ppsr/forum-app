@@ -221,7 +221,6 @@ export async function uploadReaction({
     Utils.toArray(reaction, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
   ];
-  console.log("Reaction fields:", type, topic_txid, parentPostTxid, directParentTxid, reaction, createdBy);
   const lockingScript = await pushdrop.lock(
     fields,
     [constants.securityProtocol, constants.protocolId],
