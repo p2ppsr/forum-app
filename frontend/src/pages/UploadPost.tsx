@@ -52,11 +52,9 @@ export default function UploadPost() {
     }
 
     await uploadPost({ topicTxid, title, body, tags: [] });
-
-    setStatus("Post submitted (demo)");
-    setError(null);
-    setTitle("");
-    setBody("");
+    // Redirect back to the thread page, similar to how creating a topic navigates after success
+    const target = topic ? `/${encodeURIComponent(topic)}` : "/home";
+    window.location.hash = target;
   };
 
   const getTopicTxid = async () => {
@@ -88,7 +86,10 @@ export default function UploadPost() {
           </Box>
           <Button
             variant="text"
-            onClick={() => (window.location.hash = "/topic")}
+            onClick={() => {
+              const target = topic ? `/${encodeURIComponent(topic)}` : "/home";
+              window.location.hash = target;
+            }}
           >
             Back to Thread
           </Button>
