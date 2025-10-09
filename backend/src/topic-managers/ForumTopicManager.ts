@@ -199,7 +199,11 @@ export default class ForumTopicManager implements TopicManager {
 
   async checkReply(fields: number[][]) {
     try {
-      if (fields.length !== 7) {
+      console.log(fields.length)
+      for (const field of fields) {
+        console.log(Utils.toUTF8(Utils.toArray(field)))
+      }
+      if (fields.length !== 8) {
         console.log("Invalid reply fields length");
         return false;
       }
@@ -216,7 +220,7 @@ export default class ForumTopicManager implements TopicManager {
         return false;
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10);
+      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[4])), 10);
       const now = Date.now();
       const thirtyMin = 30 * 60 * 1000;
 
@@ -230,7 +234,7 @@ export default class ForumTopicManager implements TopicManager {
       }
 
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])));
+        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])));
       } catch {
         console.log("Invalid public key format.");
         return false;

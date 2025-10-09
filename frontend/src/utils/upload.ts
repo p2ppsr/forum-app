@@ -158,7 +158,7 @@ export async function uploadReply({
     Utils.toArray(body, "utf8"),
     Utils.toArray("" + createdAt, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
-    [],
+    []
   ];
 
   const lockingScript = await pushdrop.lock(
@@ -183,6 +183,13 @@ export async function uploadReply({
       randomizeOutputs: false,
     },
   });
+
+  console.log(`type: ${type}`);
+  console.log(`postTxid: ${postTxid}`);
+  console.log(`parentReplyId: ${parentReplyId}`);
+  console.log(`body: ${body}`);
+  console.log(`createdAt: ${createdAt}`);
+  console.log(`createdBy: ${createdBy}`);
 
   if (!tx) {
     throw new Error("Error creating action");

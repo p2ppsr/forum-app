@@ -24,6 +24,7 @@ export interface Post {
   createdAt: string
   createdBy: string
   tags?: string[]
+  preEditId?: string
 }
 export interface Reply {
   id: string
@@ -33,11 +34,12 @@ export interface Reply {
   body: string
   createdAt: string
   createdBy: string
+  preEditId?: string
 }
 export interface Reaction {
   id: string
   type: string
-  directParentTxid?: string
+  directParentId?: string
   body: string
   createdBy: string
   parentPostId: string

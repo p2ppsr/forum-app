@@ -12,6 +12,7 @@ import type { Post, Reply, Reaction } from "../utils/types";
 import { fetchPost } from "../utils/forumFetches";
 import PostCard from "../components/PostCard";
 import { uploadReply } from "../utils/upload";
+import FormatReplies from "./FormatReplies";
 
 function parseHash() {
   try {
@@ -47,6 +48,9 @@ export default function PostReply() {
       setError(null);
       try {
         const { post, reactions, replies } = await fetchPost(postTxid);
+
+        console.log(replies)
+        
         if (alive) {setPost(post)
           setReplies(replies);
           setReactions(reactions);
@@ -109,7 +113,10 @@ export default function PostReply() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {!!post && (
+        <>
         <PostCard postContext={{ post, reactions }} clickable={false} truncateBody={false} />
+        <FormatReplies replies={replies} />
+        </>
       )}
 
       <Paper variant="outlined" sx={{ p: 2 }}>

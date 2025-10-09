@@ -81,7 +81,7 @@ export async function fetchAllPosts(
         id: tx.id("hex"),
         type,
         parentPostId: Utils.toUTF8(Utils.toArray(f[2])),
-        directParentTxid: Utils.toUTF8(Utils.toArray(f[3])),
+        directParentId: Utils.toUTF8(Utils.toArray(f[3])),
         body: Utils.toUTF8(Utils.toArray(f[4])),
         createdBy: Utils.toUTF8(Utils.toArray(f[5])),
       };
@@ -165,7 +165,7 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
                  id: parsedTransaction.id("hex"),
                   type,
                   parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
-                  directParentTxid: Utils.toUTF8(Utils.toArray(fields[3])),
+                  directParentId: Utils.toUTF8(Utils.toArray(fields[3])),
                   body: Utils.toUTF8(Utils.toArray(fields[4])),
                   createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
             })
