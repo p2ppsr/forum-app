@@ -10,10 +10,18 @@ export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: Topic)
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => title.trim().length > 0 && description.trim().length > 0 && !submitting, [title, description, submitting]);
+  const titleValid = useMemo(() => /^[A-Za-z0-9_-]+$/.test(title), [title]);
+  const canSubmit = useMemo(
+    () => title.trim().length > 0 && titleValid && description.trim().length > 0 && !submitting,
+    [title, titleValid, description, submitting]
+  );
 
   const onSubmit = async (e?: FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
+    if (!titleValid) {
+      setError("Title can only include letters, numbers, underscores, and hyphens.");
+      return;
+    }
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
@@ -51,7 +59,8 @@ export default function Upload({ onTopicCreated }: { onTopicCreated?: (t: Topic)
             onChange={(e) => setTitle(e.target.value)}
             required
             inputProps={{ maxLength: 120 }}
-            helperText={`${title.length}/120`}
+            error={title.length > 0 && !titleValid}
+            helperText={title.length > 0 && !titleValid ? "Only a-z, A-Z, 0-9, _ and - are allowed" : `${title.length}/120`}
           />
           <TextField
             label="Description"

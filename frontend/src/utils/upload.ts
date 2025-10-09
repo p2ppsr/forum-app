@@ -209,7 +209,6 @@ export async function uploadReaction({
 }) {
   const type = "reaction";
 
-  const createdAt = Date.now();
   const createdBy = (await wallet.getPublicKey({ identityKey: true }))
     .publicKey;
 

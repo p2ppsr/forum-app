@@ -105,8 +105,11 @@ export default class ForumTopicManager implements TopicManager {
         return false
       }
 
-      if (fields[1].length === 0) {
-        console.log("Invalid topic name");
+
+      const titleStr = Utils.toUTF8(Utils.toArray(fields[1]))
+      const allowed = /^[A-Za-z0-9_-]+$/
+      if (!allowed.test(titleStr)) {
+        console.log("Invalid topic name")
         return false
       }
 
