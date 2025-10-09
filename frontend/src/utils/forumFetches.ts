@@ -81,11 +81,12 @@ export async function fetchAllPosts(
       const reaction: Reaction = {
         id: tx.id("hex"),
         type,
-        parentPostId: Utils.toUTF8(Utils.toArray(f[1])),
-        directParentTxid: Utils.toUTF8(Utils.toArray(f[2])),
-        body: Utils.toUTF8(Utils.toArray(f[3])),
-        createdBy: Utils.toUTF8(Utils.toArray(f[4])),
+        parentPostId: Utils.toUTF8(Utils.toArray(f[2])),
+        directParentTxid: Utils.toUTF8(Utils.toArray(f[3])),
+        body: Utils.toUTF8(Utils.toArray(f[4])),
+        createdBy: Utils.toUTF8(Utils.toArray(f[5])),
       };
+        
         console.log('Found reaction for topic', topicID, 'reaction fields:', reaction)
       reactions.push(reaction);
     }
