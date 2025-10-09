@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppBar, Box, Container, CssBaseline, Tab, Tabs, Toolbar, Typography } from "@mui/material";
 import Upload from "./Upload";
-import TopicsPage from "./pages/Topics";
+import TopicsPage from "./pages/FormatTopics";
 import TopicPosts from "./pages/TopicPosts";
 import UploadPost from "./pages/UploadPost";
+import PostReply from "./pages/PostReply";
 import type { Topic } from "./utils/types";
 import { fetchAllTopics } from "./utils/forumFetches";
 
@@ -13,15 +14,21 @@ type RouteState =
   | { name: "home" }
   | { name: "upload" }
   | { name: "topic"; slug: string }          // slug is the exact topic string
-  | { name: "post"; query: Record<string, string> };
+  | { name: "post"; query: Record<string, string> }
+  | { name: "postDetail"; topic: string; postTxid: string };
 
 function parseHashToRoute(hash: string): RouteState {
   const raw = (hash || "").replace(/^#\/?/, "");
   const [pathPart, queryPart] = raw.split("?");
   const path = decodeURIComponent(pathPart || "");  // keeps support if someone pastes encoded chars
+  const parts = path.split("/").filter(Boolean);
 
   if (!path || path === "home") return { name: "home" };
   if (path === "upload") return { name: "upload" };
+  // Match '/{topic}/post/{postTxid}'
+  if (parts.length >= 3 && parts[1] === "post") {
+    return { name: "postDetail", topic: parts[0], postTxid: parts[2] };
+  }
   if (path === "post") {
     const params = new URLSearchParams(queryPart || "");
     const query: Record<string, string> = {};
@@ -70,7 +77,7 @@ export default function App() {
     return "";
   }, [route, topics]);
 
-  const showGlobalTitle = route.name !== "topic";
+  const showGlobalTitle = route.name !== "topic" && route.name !== "postDetail";
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "background.default", color: "text.primary" }}>
@@ -118,6 +125,10 @@ export default function App() {
           )}
 
           {route.name === "post" && <UploadPost topicSlug={route.query?.topic} />}
+
+          {route.name === "postDetail" && (
+            <PostReply />
+          )}
         </Container>
       </Box>
     </Box>

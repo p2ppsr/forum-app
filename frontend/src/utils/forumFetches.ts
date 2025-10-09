@@ -1,15 +1,14 @@
 import {LookupResolver, PushDrop, Transaction, Utils
- } from "@bsv/sdk"
+} from "@bsv/sdk"
 import type { LookupQuestion } from "@bsv/overlay"
 import type{ Topic, Post, Reply, Reaction } from "./types.js"
 import type { forumQuery } from "./types"
 import constants from "../constants.js"
 export async function fetchAllTopics(): Promise<Topic[]> {
 let query = {
-    query: 'getAllTopics',
-    paramter: {}
+    query: 'getAllTopics'
 } as forumQuery
-let question = {
+  let question = {
     service: constants.lookupService,
     query: query} as LookupQuestion
     const resolver = new LookupResolver({networkPreset:
@@ -19,7 +18,6 @@ let question = {
     if(lookupResult.type !== 'output-list'){
         throw new Error('Unexpected response from lookup service')
     }
-
     let topics: Topic[] = [] 
     for(const output of lookupResult.outputs){
         const parsedTransaction = await Transaction.fromBEEF(output.beef)
@@ -43,7 +41,7 @@ let question = {
 export async function fetchAllPosts(topicID: string): Promise<Post[]> {
     let query = {
         query: 'getAllPosts',
-        paramter: topicID
+        parameter: topicID
     } as forumQuery
     let question = {
         service: constants.lookupService,
@@ -81,7 +79,7 @@ export async function fetchAllPosts(topicID: string): Promise<Post[]> {
 export async function fetchPost(post_txid: string): Promise<{post: Post | null, replies: Reply[], reactions: Reaction[]}> {
     let query = {
         query: 'getPost',
-        paramter: post_txid
+        parameter: post_txid
     } as forumQuery
     let question = {
         service: constants.lookupService,

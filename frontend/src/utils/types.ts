@@ -8,7 +8,7 @@ export interface Topic {
   title: string
   description: string
   createdAt: string
-  createdBy?: string
+  createdBy: string
 }
 export interface Post {
   id: string
@@ -17,7 +17,7 @@ export interface Post {
   title: string
   body: string
   createdAt: string
-  createdBy?: string
+  createdBy: string
   tags?: string[]
 }
 export interface Reply {
@@ -27,7 +27,7 @@ export interface Reply {
   parentReplyId?: string
   body: string
   createdAt: string
-  createdBy?: string
+  createdBy: string
 }
 export interface Reaction {
   id: string

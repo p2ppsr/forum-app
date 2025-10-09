@@ -1,4 +1,4 @@
-import { Stack, Button, Typography, Box } from "@mui/material";
+import { Stack } from "@mui/material";
 import TopicCard from "../components/TopicCard";
 import type { Topic } from "../utils/types";
 type TopicsPageProps = {
@@ -6,7 +6,7 @@ type TopicsPageProps = {
   onCreateClick: () => void;
 };
 
-export default function TopicsPage({ topics, onCreateClick }: TopicsPageProps) {
+export default function TopicsPage({ topics }: TopicsPageProps) {
   return (
     <Stack spacing={2}>
       {topics.map((t) => (
