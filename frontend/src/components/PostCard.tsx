@@ -1,16 +1,38 @@
-import { Card, CardActionArea, CardActions, CardContent, CardHeader, Chip, Button, Stack, Typography } from "@mui/material";
-import type { Post, Reaction, PostContext } from "../utils/types";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Card,
+  CardActionArea,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Chip,
+  Stack,
+  Typography,
+} from "@mui/material";
+import type { PostContext } from "../utils/types";
+import { useMemo } from "react";
 import type React from "react";
-// import { fetchPost } from "../utils/forumFetches";
 import { uploadReaction } from "../utils/upload";
+import ReactionBar, { type ReactionCounts } from "../emoji/ReactionBar";
 
-export default function PostCard({ postContext, clickable = true, truncateBody = true }: { postContext: PostContext; clickable?: boolean; truncateBody?: boolean }) {
+const normalizeReaction = (s?: string) => {
+  const v = (s || "").trim().toLowerCase();
+  if (!v) return "";
+  if (v === "like" || v === "heart") return "❤️"; // map legacy likes to heart
+  return s!; // pass through emoji or custom string
+};
+
+export default function PostCard({
+  postContext,
+  clickable = true,
+  truncateBody = true,
+}: {
+  postContext: PostContext;
+  clickable?: boolean;
+  truncateBody?: boolean;
+}) {
   const date = new Date(postContext.post.createdAt);
 
-  const [likeCount, setLikeCount] = useState<number>(0);
-  const [liking, setLiking] = useState<boolean>(false);
-
+  // derive current topic from the URL for deep-link navigation
   const topicFromHash = useMemo(() => {
     try {
       const raw = (window.location.hash || "").replace(/^#\/?/, "");
@@ -22,39 +44,16 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
     }
   }, []);
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        // const { reactions } = await fetchPost(postContext.post.id);
-        const count = postContext.reactions.filter(r => (r.body || "").toLowerCase() === "like").length;
-        if (alive) setLikeCount(count);
-      } catch {
-        console.error("Failed to fetch post reactions");
-        if (alive) setLikeCount(0);
-      }
-    })();
-    return () => { alive = false; };
-  }, [postContext.post.id]);
-
-  const onLike = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (liking) return;
-    try {
-      setLiking(true);
-      await uploadReaction({ topic_txid: postContext.post.topicId, parentPostTxid: postContext.post.id, directParentTxid: postContext.post.id, reaction: "like" });
-      setLikeCount(c => c + 1);
-    } catch {
-      console.error("Failed to like post");
-    } finally {
-      setLiking(false);
+  // Aggregate reaction counts from postContext
+  const counts: ReactionCounts = useMemo(() => {
+    const acc: ReactionCounts = {};
+    for (const r of postContext.reactions) {
+      const key = normalizeReaction(r.body);
+      if (!key) continue;
+      acc[key] = (acc[key] || 0) + 1;
     }
-  };
-
-  const onMore = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // placeholder: future reactions panel
-  };
+    return acc;
+  }, [postContext.reactions]);
 
   const onOpenPost = () => {
     if (!clickable) return;
@@ -62,6 +61,17 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
     if (!topic) return;
     window.location.hash = `/${encodeURIComponent(topic)}/post/${postContext.post.id}`;
   };
+
+  // Send a reaction to chain (ReactionBar does optimistic UI internally)
+  const onReact = async (emoji: string) => {
+    await uploadReaction({
+      topic_txid: postContext.post.topicId,
+      parentPostTxid: postContext.post.id,
+      directParentTxid: postContext.post.id,
+      reaction: emoji, // store the emoji itself
+    });
+  };
+
   const content = (
     <>
       <CardHeader
@@ -73,23 +83,31 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
         subheader={date.toLocaleString()}
         sx={{ pb: 0 }}
       />
+
       <CardContent>
         <Typography
           variant="body2"
           color="text.secondary"
           sx={
             truncateBody
-              ? { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", mb: postContext.post.tags?.length ? 1 : 0 }
+              ? {
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  mb: postContext.post.tags?.length ? 1 : 0,
+                }
               : { whiteSpace: "pre-wrap", mb: postContext.post.tags?.length ? 1 : 0 }
           }
         >
           {postContext.post.body}
         </Typography>
-        {(!!postContext.post.tags?.length && postContext.post.tags.length < 0) && (
+
+        {!!postContext.post.tags?.length && (
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {postContext.post.tags.map((tag) => (
-              <Chip key={tag} size="small" label={tag} variant="outlined" />)
-            )}
+              <Chip key={tag} size="small" label={tag} variant="outlined" />
+            ))}
           </Stack>
         )}
       </CardContent>
@@ -103,11 +121,10 @@ export default function PostCard({ postContext, clickable = true, truncateBody =
       ) : (
         content
       )}
-      <CardActions sx={{ justifyContent: "space-between", pt: 0 }}>
-        <Button size="small" onClick={onLike} disabled={liking}>
-          {`♥ ${likeCount}`}
-        </Button>
-        <Button size="small" onClick={onMore}>Reactions</Button>
+
+      {/* Reactions */}
+      <CardActions sx={{ justifyContent: "space-between", pt: 0, px: 2, pb: 1.5 }}>
+        <ReactionBar counts={counts} onReact={onReact} />
       </CardActions>
     </Card>
   );
