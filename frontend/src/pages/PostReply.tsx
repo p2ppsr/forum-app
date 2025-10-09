@@ -1,8 +1,17 @@
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import type { Post } from "../utils/types";
 import { fetchPost } from "../utils/forumFetches";
 import PostCard from "../components/PostCard";
+import { uploadReply } from "../utils/upload";
 
 function parseHash() {
   try {
@@ -23,6 +32,8 @@ export default function PostReply() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<string>("");
+
+  const canSubmit = useMemo(() => replyText.trim().length > 0, [replyText]);
 
   const { topic, postTxid } = useMemo(() => parseHash(), []);
 
@@ -46,10 +57,29 @@ export default function PostReply() {
     };
   }, [postTxid]);
 
+  const onReply = async () => {
+    if (!postTxid) return;
+    try {
+      await uploadReply({
+        postTxid: postTxid,
+        parentReplyId: postTxid,
+        body: replyText,
+      });
+      setReplyText("");
+    } catch {
+      console.error("Failed to reply");
+    }
+  };
+
   return (
     <Stack spacing={2}>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={2}
+        >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="overline" color="text.secondary">
               Thread
@@ -60,7 +90,9 @@ export default function PostReply() {
           </Box>
           <Button
             variant="text"
-            onClick={() => { window.location.hash = `/${encodeURIComponent(topic)}`; }}
+            onClick={() => {
+              window.location.hash = `/${encodeURIComponent(topic)}`;
+            }}
           >
             Back to Thread
           </Button>
@@ -71,11 +103,13 @@ export default function PostReply() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {!!post && (
-        <PostCard post={post} clickable={false} />
+        <PostCard postContext={{ post, reactions: [] }} clickable={false} truncateBody={false} />
       )}
 
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>Reply</Typography>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Reply
+        </Typography>
         <Stack spacing={2}>
           <TextField
             label="Write your reply"
@@ -87,10 +121,12 @@ export default function PostReply() {
             fullWidth
           />
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" disabled>
+            <Button variant="contained" disabled={!canSubmit} onClick={onReply}>
               Reply
             </Button>
-            <Button variant="text" onClick={() => setReplyText("")}>Clear</Button>
+            <Button variant="text" onClick={() => setReplyText("")}>
+              Clear
+            </Button>
           </Box>
         </Stack>
       </Paper>
