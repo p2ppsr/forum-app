@@ -1,5 +1,12 @@
 // components/TopicCard.tsx
-import { Card, CardContent, CardHeader, Typography, CardActionArea, Box } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  CardActionArea,
+  Box,
+} from "@mui/material";
 import type { Topic } from "../utils/types";
 
 export default function TopicCard({ topic }: { topic: Topic }) {
@@ -17,7 +24,16 @@ export default function TopicCard({ topic }: { topic: Topic }) {
         aria-label={`Open topic: ${topic.title}`}
       >
         <CardHeader
-          title={<Typography variant="h6" noWrap title={topic.title} sx={{ fontWeight: 700 }}>{topic.title}</Typography>}
+          title={
+            <Typography
+              variant="h6"
+              noWrap
+              title={topic.title}
+              sx={{ fontWeight: 700 }}
+            >
+              {topic.title}
+            </Typography>
+          }
           subheader={
             <Typography
               variant="body2"
@@ -40,7 +56,8 @@ export default function TopicCard({ topic }: { topic: Topic }) {
         <CardContent sx={{ pt: 1 }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
-              {created}{topic.createdBy ? ` • by ${topic.createdBy}` : ""}
+              {created}
+              {topic.createdBy ? ` • by ${topic.createdBy}` : ""}
             </Typography>
           </Box>
         </CardContent>

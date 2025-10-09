@@ -79,7 +79,7 @@ export default function PostCard({ post, clickable = true }: { post: Post; click
           >
             {post.body}
           </Typography>
-          {!!post.tags?.length && (
+          {(!!post.tags?.length && post.tags.length < 0) && (
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
               {post.tags.map((tag) => (
                 <Chip key={tag} size="small" label={tag} variant="outlined" />)
