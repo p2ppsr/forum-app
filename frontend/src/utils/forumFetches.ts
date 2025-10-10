@@ -103,7 +103,7 @@ export async function fetchAllPosts(
 
   const reactionsByPostId: Record<string, Reaction[]> = {};
   for (const r of reactions) {
-    const key = r.parentPostId ?? r.directParentTxid; 
+    const key = r.parentPostId ?? r.directParentId; 
     if (!key) continue;
     (reactionsByPostId[key] ??= []).push(r);
   }

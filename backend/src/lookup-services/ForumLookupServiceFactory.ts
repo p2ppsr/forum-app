@@ -51,7 +51,7 @@ export class ForumLookupService implements LookupService {
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reply' )
       {
-        await this.storage.storeRecord(txid, outputIndex, 'reply', {field1: Utils.toUTF8(Utils.toArray(fields[2]))})
+        await this.storage.storeRecord(txid, outputIndex, 'reply', {field1: Utils.toUTF8(Utils.toArray(fields[1]))})
       }
     }
     catch(e){

@@ -1,18 +1,11 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import type { Post, Reply, Reaction } from "../utils/types";
 import { fetchPost } from "../utils/forumFetches";
 import PostCard from "../components/PostCard";
 import { uploadReply } from "../utils/upload";
 import FormatReplies from "./FormatReplies";
+import InlineReplyComposer from "../components/InlineReplyComposer";
 
 function parseHash() {
   try {
@@ -34,11 +27,51 @@ export default function PostReply() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState<string>("");
-
-  const canSubmit = useMemo(() => replyText.trim().length > 0, [replyText]);
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [showPostComposer, setShowPostComposer] = useState<boolean>(false);
+  const [composerValue, setComposerValue] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   const { topic, postTxid } = useMemo(() => parseHash(), []);
+
+  const openReplyForPost = () => {
+    setShowPostComposer(true);
+    setActiveReplyId(null);
+    setComposerValue("");
+  };
+  const openReplyForReply = (parent: Reply) => {
+    setShowPostComposer(false);
+    setActiveReplyId(parent.id);
+    setComposerValue("");
+  };
+  const cancelComposer = () => {
+    setShowPostComposer(false);
+    setActiveReplyId(null);
+    setComposerValue("");
+  };
+  const submitComposer = async () => {
+    if (!postTxid) return;
+    const parentId = activeReplyId ?? postTxid;
+    try {
+      setSubmitting(true);
+      await uploadReply({
+        postTxid,
+        parentReplyId: parentId,
+        body: composerValue,
+      });
+      setComposerValue("");
+      cancelComposer();
+      try {
+        const { reactions: r2, replies: repl2 } = await fetchPost(postTxid);
+        setReactions(r2);
+        setReplies(repl2);
+      } catch {}
+    } catch {
+      console.error("Failed to reply");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -48,12 +81,17 @@ export default function PostReply() {
       setError(null);
       try {
         const { post, reactions, replies } = await fetchPost(postTxid);
-        
-        if (alive) {setPost(post)
+
+        for (const r of replies) {
+          console.log(r);
+          console.log(r.id);
+        }
+
+        if (alive) {
+          setPost(post);
           setReplies(replies);
           setReactions(reactions);
-        };
-
+        }
       } catch (e) {
         if (alive) setError("Failed to load post");
       } finally {
@@ -64,20 +102,6 @@ export default function PostReply() {
       alive = false;
     };
   }, [postTxid]);
-
-  const onReply = async () => {
-    if (!postTxid) return;
-    try {
-      await uploadReply({
-        postTxid: postTxid,
-        parentReplyId: postTxid,
-        body: replyText,
-      });
-      setReplyText("");
-    } catch {
-      console.error("Failed to reply");
-    }
-  };
 
   return (
     <Stack spacing={2}>
@@ -112,35 +136,36 @@ export default function PostReply() {
 
       {!!post && (
         <>
-        <PostCard postContext={{ post, reactions }} clickable={false} truncateBody={false} />
-        <FormatReplies replies={replies} />
-        </>
-      )}
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Reply
-        </Typography>
-        <Stack spacing={2}>
-          <TextField
-            label="Write your reply"
-            placeholder="Share your thoughts…"
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            multiline
-            minRows={4}
-            fullWidth
+          <PostCard
+            postContext={{ post, reactions }}
+            clickable={false}
+            truncateBody={false}
           />
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" disabled={!canSubmit} onClick={onReply}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", pr: 0.5 }}>
+            <Button size="small" onClick={openReplyForPost}>
               Reply
             </Button>
-            <Button variant="text" onClick={() => setReplyText("")}>
-              Clear
-            </Button>
           </Box>
-        </Stack>
-      </Paper>
+          {showPostComposer && (
+            <InlineReplyComposer
+              value={composerValue}
+              onChange={setComposerValue}
+              onCancel={cancelComposer}
+              onSubmit={submitComposer}
+              submitting={submitting}
+            />
+          )}
+          <FormatReplies
+            replies={replies}
+            onReply={openReplyForReply}
+            activeId={activeReplyId}
+            composerValue={composerValue}
+            onComposerChange={setComposerValue}
+            onCancel={cancelComposer}
+            onSubmit={submitComposer}
+          />
+        </>
+      )}
     </Stack>
   );
 }
