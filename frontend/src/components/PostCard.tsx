@@ -21,6 +21,13 @@ const normalizeReaction = (s?: string) => {
   return s!; // pass through emoji or custom string
 };
 
+function toTime(v: string): number {
+  const n = Number(v);
+  if (Number.isFinite(n)) return v.length === 10 ? n * 1000 : n;
+  const t = new Date(v).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
 export default function PostCard({
   postContext,
   clickable = true,
@@ -30,7 +37,10 @@ export default function PostCard({
   clickable?: boolean;
   truncateBody?: boolean;
 }) {
-  const date = new Date(postContext.post.createdAt);
+  const dateString = useMemo(
+    () => new Date(toTime(postContext.post.createdAt)).toLocaleString(),
+    [postContext.post.createdAt]
+  );
 
   // derive current topic from the URL for deep-link navigation
   const topicFromHash = useMemo(() => {
@@ -88,7 +98,7 @@ export default function PostCard({
             {postContext.post.title}
           </Typography>
         }
-        subheader={date.toLocaleString()}
+        subheader={dateString}
         sx={{ pb: 0 }}
       />
 
