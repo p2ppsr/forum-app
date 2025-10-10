@@ -55,6 +55,14 @@ export default function PostCard({
     return acc;
   }, [postContext.reactions]);
 
+  const cleanedTags = useMemo(
+    () =>
+      (postContext.post.tags ?? [])
+        .map((t) => (t ?? "").replace(/[\x00-\x1F\x7F]/g, "").trim())
+        .filter(Boolean),
+    [postContext.post.tags]
+  );
+
   const onOpenPost = () => {
     if (!clickable) return;
     const topic = topicFromHash;
@@ -95,17 +103,20 @@ export default function PostCard({
                   WebkitLineClamp: 3,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
-                  mb: postContext.post.tags?.length ? 1 : 0,
+                  mb: cleanedTags.length ? 1 : 0,
                 }
-              : { whiteSpace: "pre-wrap", mb: postContext.post.tags?.length ? 1 : 0 }
+              : {
+                  whiteSpace: "pre-wrap",
+                  mb: cleanedTags.length ? 1 : 0,
+                }
           }
         >
           {postContext.post.body}
         </Typography>
 
-        {!!postContext.post.tags?.length && (
+        {cleanedTags.length > 0 && (
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-            {postContext.post.tags.map((tag) => (
+            {cleanedTags.map((tag) => (
               <Chip key={tag} size="small" label={tag} variant="outlined" />
             ))}
           </Stack>
