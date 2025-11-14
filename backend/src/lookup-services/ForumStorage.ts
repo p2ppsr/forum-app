@@ -50,7 +50,11 @@ export class ForumStorage {
           outputIndex,
           createdAt: new Date(),
           parent_postID: metadata.field2,
-          topicID: metadata.field1
+          topicID: metadata.field1,
+          emoji: metadata.field3,
+          createdBy: metadata.field4,
+          recipient: metadata.field5,
+          payoutSats: metadata.payoutSats
         })
       break
       case 'reply':

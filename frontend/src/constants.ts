@@ -5,17 +5,55 @@ interface Constants {
     securityProtocol: SecurityLevel
     topicManager: string,
     lookupService: string
+    reactionFeePublicKey: string
+    reactionFeeSatoshis: number
+    reactionRecipientSatoshis: number
+    emojiPrices: Record<string, number>
   }
   
   let constants: Constants
   
   constants = { 
-    protocolId: "testforum1" ,
+    protocolId: "blockit" ,
     securityProtocol: 1,
-    topicManager: "tm_testforum1",
-    lookupService: "ls_testforum1"
+    topicManager: "tm_block",
+    lookupService: "ls_block",
+    reactionFeePublicKey: "",
+    reactionFeeSatoshis: 0,
+    reactionRecipientSatoshis: 0,
+    emojiPrices: {
+      "😀": 75,
+      "😁": 80,
+      "😂": 120,
+      "🤣": 140,
+      "🙂": 60,
+      "😉": 65,
+      "😊": 85,
+      "😍": 150,
+      "😘": 130,
+      "😎": 110,
+      "😭": 90,
+      "😢": 70,
+      "😡": 95,
+      "😱": 100,
+      "🤔": 70,
+      "🙃": 55,
+      "🥲": 65,
+      "👍": 80,
+      "👎": 80,
+      "👏": 90,
+      "🙏": 85,
+      "🙌": 95,
+      "👀": 60,
+      "❤️": 200,
+      "💔": 90,
+      "🔥": 180,
+      "✨": 100,
+      "🎉": 150,
+      "💯": 170,
+      "😮": 75
+    }
   }
   
   
   export default constants
-  

@@ -6,6 +6,10 @@ export interface ForumRecord {
   topicID?: string  // Used as an example
   parent_postID?: string
   topicTitle?: string
+  emoji?: string
+  createdBy?: string
+  recipient?: string
+  payoutSats?: number
 }
 
 // Used to identify a UTXO that is admitted by the Topic Manager
@@ -17,6 +21,10 @@ export interface UTXOReference {
 export interface Metadata {
   field1: string
   field2?: string
+  field3?: string
+  field4?: string
+  field5?: string
+  payoutSats?: number
 }
 
 export interface forumQuery {

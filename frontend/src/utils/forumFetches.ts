@@ -59,34 +59,41 @@ export async function fetchAllPosts(
 
   for (const output of lookupResult.outputs) {
     const tx = await Transaction.fromBEEF(output.beef);
-    const decoded = await PushDrop.decode(tx.outputs[0].lockingScript);
-    const f = decoded.fields;
+    // Scan all outputs; some transactions (reactions) have fee/payout outputs before the PushDrop output
+    for (const o of tx.outputs) {
+      try {
+        const decoded = await PushDrop.decode(o.lockingScript as any);
+        const f = decoded.fields;
+        const type = Utils.toUTF8(Utils.toArray(f[0]));
 
-    const type = Utils.toUTF8(Utils.toArray(f[0]));
-
-    if (type === "post") {
-      const post: Post = {
-        id: tx.id("hex"),
-        type,
-        topicId: Utils.toUTF8(Utils.toArray(f[1])),
-        title: Utils.toUTF8(Utils.toArray(f[2])),
-        body: Utils.toUTF8(Utils.toArray(f[3])),
-        createdAt: Utils.toUTF8(f[4]),
-        createdBy: Utils.toUTF8(Utils.toArray(f[5])),
-        tags: f[6] ? Utils.toUTF8(Utils.toArray(f[6])).split(",") : undefined,
-    };
-        posts.push(post);
-    } else if (type === "reaction") {
-      const reaction: Reaction = {
-        id: tx.id("hex"),
-        type,
-        parentPostId: Utils.toUTF8(Utils.toArray(f[2])),
-        directParentId: Utils.toUTF8(Utils.toArray(f[3])),
-        body: Utils.toUTF8(Utils.toArray(f[4])),
-        createdBy: Utils.toUTF8(Utils.toArray(f[5])),
-      };
-        
-      reactions.push(reaction);
+        if (type === "post") {
+          const post: Post = {
+            id: tx.id("hex"),
+            type,
+            topicId: Utils.toUTF8(Utils.toArray(f[1])),
+            title: Utils.toUTF8(Utils.toArray(f[2])),
+            body: Utils.toUTF8(Utils.toArray(f[3])),
+            createdAt: Utils.toUTF8(f[4]),
+            createdBy: Utils.toUTF8(Utils.toArray(f[5])),
+            tags: f[6] ? Utils.toUTF8(Utils.toArray(f[6])).split(",") : undefined,
+          };
+          posts.push(post);
+          break; // one pushdrop per tx for posts
+        } else if (type === "reaction") {
+          const reaction: Reaction = {
+            id: tx.id("hex"),
+            type,
+            parentPostId: Utils.toUTF8(Utils.toArray(f[2])),
+            directParentId: Utils.toUTF8(Utils.toArray(f[3])),
+            body: Utils.toUTF8(Utils.toArray(f[4])),
+            createdBy: Utils.toUTF8(Utils.toArray(f[5])),
+          };
+          reactions.push(reaction);
+          break; // one reaction pushdrop per tx
+        }
+      } catch {
+        // not a PushDrop output; continue scanning
+      }
     }
   }
 
@@ -133,46 +140,61 @@ export async function fetchPost(post_txid: string): Promise<{post: Post | null, 
         let replies: Reply[] = []
         let reactions: Reaction[] = []
     for(const output of lookupResult.outputs){
-        const parsedTransaction = await Transaction.fromBEEF(output.beef)
-        const decodedOutput = await PushDrop.decode(parsedTransaction.outputs[0].lockingScript)
-        const fields = decodedOutput.fields
-        let type = Utils.toUTF8(Utils.toArray(fields[0]))
-        if(type === 'post'){
-            post = {
-                id: parsedTransaction.id('hex'),
-                type: type,
-                topicId: Utils.toUTF8(Utils.toArray(fields[1])),
-                title: Utils.toUTF8(Utils.toArray(fields[2])),
-                body: Utils.toUTF8(Utils.toArray(fields[3])),
-                createdAt: Utils.toUTF8(fields[4]),
-                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
-                tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
-            }
-        }
-        else if(type === 'reply'){
-            replies.push( {
-                id: parsedTransaction.id('hex'),
-                type: type,
-                parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
-                parentReplyId: Utils.toUTF8(Utils.toArray(fields[2])),
-                body: Utils.toUTF8(Utils.toArray(fields[3])),
-                createdAt: Utils.toUTF8(fields[4]),
-                createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
-            })
-        }
-        else if(type === 'reaction'){
-            reactions.push( {
-                 id: parsedTransaction.id("hex"),
-                  type,
-                  parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
-                  directParentId: Utils.toUTF8(Utils.toArray(fields[3])),
-                  body: Utils.toUTF8(Utils.toArray(fields[4])),
+      const tx = await Transaction.fromBEEF(output.beef)
+      // Scan all outputs to locate the PushDrop output and its type
+      let matched = false
+      for (const o of tx.outputs) {
+        try {
+          const decoded = await PushDrop.decode(o.lockingScript as any)
+          const fields = decoded.fields
+          const type = Utils.toUTF8(Utils.toArray(fields[0]))
+          if(type === 'post'){
+              post = {
+                  id: tx.id('hex'),
+                  type: type,
+                  topicId: Utils.toUTF8(Utils.toArray(fields[1])),
+                  title: Utils.toUTF8(Utils.toArray(fields[2])),
+                  body: Utils.toUTF8(Utils.toArray(fields[3])),
+                  createdAt: Utils.toUTF8(fields[4]),
                   createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
-            })
+                  tags: fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])).split(',') : undefined,
+              }
+              matched = true
+              break
+          }
+          else if(type === 'reply'){
+              replies.push( {
+                  id: tx.id('hex'),
+                  type: type,
+                  parentPostId: Utils.toUTF8(Utils.toArray(fields[1])),
+                  parentReplyId: Utils.toUTF8(Utils.toArray(fields[2])),
+                  body: Utils.toUTF8(Utils.toArray(fields[3])),
+                  createdAt: Utils.toUTF8(fields[4]),
+                  createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
+              })
+              matched = true
+              break
+          }
+          else if(type === 'reaction'){
+              reactions.push( {
+                   id: tx.id("hex"),
+                    type,
+                    parentPostId: Utils.toUTF8(Utils.toArray(fields[2])),
+                    directParentId: Utils.toUTF8(Utils.toArray(fields[3])),
+                    body: Utils.toUTF8(Utils.toArray(fields[4])),
+                    createdBy: Utils.toUTF8(Utils.toArray(fields[5])),
+              })
+              matched = true
+              break
+          }
+        } catch {
+          // not a pushdrop output
         }
-        else{
-            throw new Error('Unexpected output type: expected post, reply or reaction but got '+type)
-        }
+      }
+      if (!matched) {
+        // If no pushdrop found, skip this tx entry
+        continue
+      }
     }
     return {post, replies, reactions}
 }

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppBar, Box, Container, CssBaseline, Tab, Tabs, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Button, Container, CssBaseline, Tab, Tabs, Toolbar, Typography } from "@mui/material";
 import Upload from "./Upload";
 import TopicsPage from "./pages/FormatTopics";
 import TopicPosts from "./pages/TopicPosts";
 import UploadPost from "./pages/UploadPost";
 import PostReply from "./pages/PostReply";
+import ClaimPage from "./pages/Claim";
 import type { Topic } from "./utils/types";
 import { fetchAllTopics } from "./utils/forumFetches";
 
@@ -15,7 +16,8 @@ type RouteState =
   | { name: "upload" }
   | { name: "topic"; slug: string }          // slug is the exact topic string
   | { name: "post"; query: Record<string, string> }
-  | { name: "postDetail"; topic: string; postTxid: string };
+  | { name: "postDetail"; topic: string; postTxid: string }
+  | { name: "claim" };
 
 function parseHashToRoute(hash: string): RouteState {
   const raw = (hash || "").replace(/^#\/?/, "");
@@ -25,6 +27,7 @@ function parseHashToRoute(hash: string): RouteState {
 
   if (!path || path === "home") return { name: "home" };
   if (path === "upload") return { name: "upload" };
+  if (path === "claim") return { name: "claim" };
   // Match '/{topic}/post/{postTxid}'
   if (parts.length >= 3 && parts[1] === "post") {
     return { name: "postDetail", topic: parts[0], postTxid: parts[2] };
@@ -68,6 +71,7 @@ const tabValue: 0 | 1 | false =
   const pageTitle = useMemo(() => {
     if (route.name === "home") return "Home";
     if (route.name === "upload") return "Create Topic";
+    if (route.name === "claim") return "Claim";
     if (route.name === "post") {
       const topicKey = route.query?.topic;
       if (topicKey) {
@@ -99,6 +103,9 @@ const tabValue: 0 | 1 | false =
             <Tab label="Home" />
             <Tab label="Upload" />
           </Tabs>
+          <Button size="small" variant="outlined" sx={{ ml: 2 }} onClick={() => { window.location.hash = "/claim"; }}>
+            Claim
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -129,10 +136,14 @@ const tabValue: 0 | 1 | false =
             />
           )}
 
-          {route.name === "post" && <UploadPost topicSlug={route.query?.topic} />}
+          {route.name === "post" && <UploadPost />}
 
           {route.name === "postDetail" && (
             <PostReply />
+          )}
+
+          {route.name === "claim" && (
+            <ClaimPage />
           )}
         </Container>
       </Box>

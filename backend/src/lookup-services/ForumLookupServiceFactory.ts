@@ -47,7 +47,21 @@ export class ForumLookupService implements LookupService {
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reaction' )
       {
-        await this.storage.storeRecord(txid, outputIndex, 'reaction', {field1: Utils.toUTF8(Utils.toArray(fields[1])), field2: Utils.toUTF8(Utils.toArray(fields[2])) })
+        const topicId = Utils.toUTF8(Utils.toArray(fields[1]))
+        const parentPostId = Utils.toUTF8(Utils.toArray(fields[2]))
+        const emoji = Utils.toUTF8(Utils.toArray(fields[4]))
+        const createdBy = Utils.toUTF8(Utils.toArray(fields[5]))
+        // recipient public key is required by TopicManager, but guard anyway
+        const recipient = fields[6] ? Utils.toUTF8(Utils.toArray(fields[6])) : undefined
+        const expectedPayout = constants.emojiPrices[emoji] ?? 0
+        await this.storage.storeRecord(txid, outputIndex, 'reaction', {
+          field1: topicId,
+          field2: parentPostId,
+          field3: emoji,
+          field4: createdBy,
+          field5: recipient,
+          payoutSats: expectedPayout
+        })
       }
       else if(Utils.toUTF8(Utils.toArray(fields[0])) == 'reply' )
       {
@@ -112,6 +126,10 @@ export class ForumLookupService implements LookupService {
       if(query === 'getAllPosts' && parameter)
       {
           return await this.storage.findAllPost(parameter)
+      }
+      if(query === 'getAllReactions')
+      {
+          return await this.storage.findAllReactions()
       }
 
       throw new Error('Unknown query type: ' + query + ' with parameter: ' + parameter);

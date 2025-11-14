@@ -2,9 +2,10 @@ import {
   Utils,
   WalletClient,
   PushDrop,
-  GlobalKVStore,
   TopicBroadcaster,
   Transaction,
+  PublicKey,
+  P2PKH,
 } from "@bsv/sdk";
 import constants from "../constants";
 
@@ -42,7 +43,8 @@ export async function uploadTopic({
     true
   );
 
-  const { txid, tx } = await wallet.createAction({
+  setStatusText?.("Publishing topic...");
+  const { tx } = await wallet.createAction({
     outputs: [
       {
         lockingScript: lockingScript.toHex(),
@@ -64,9 +66,8 @@ export async function uploadTopic({
     networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet",
   });
-  const backendResponse = await broadcaster.broadcast(
-    Transaction.fromAtomicBEEF(tx)
-  );
+  await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx));
+  setStatusText?.("Topic broadcasted.");
 
   return;
 }
@@ -107,7 +108,7 @@ export async function uploadPost({
     true
   );
 
-  const { txid, tx } = await wallet.createAction({
+  const { tx } = await wallet.createAction({
     outputs: [
       {
         lockingScript: lockingScript.toHex(),
@@ -129,7 +130,7 @@ export async function uploadPost({
     networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet",
   });
-  const backendResponse = await broadcaster.broadcast(
+  await broadcaster.broadcast(
     Transaction.fromAtomicBEEF(tx)
   );
 
@@ -169,7 +170,7 @@ export async function uploadReply({
     true
   );
 
-  const { txid, tx } = await wallet.createAction({
+  const { tx } = await wallet.createAction({
     outputs: [
       {
         lockingScript: lockingScript.toHex(),
@@ -198,7 +199,7 @@ export async function uploadReply({
     networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet",
   });
-  const backendResponse = await broadcaster.broadcast(
+  await broadcaster.broadcast(
     Transaction.fromAtomicBEEF(tx)
   );
 
@@ -236,7 +237,7 @@ export async function uploadReaction({
     true
   );
 
-  const { txid, tx } = await wallet.createAction({
+  const { tx } = await wallet.createAction({
     outputs: [
       {
         lockingScript: lockingScript.toHex(),
@@ -258,9 +259,107 @@ export async function uploadReaction({
     networkPreset:
       window.location.hostname === "localhost" ? "local" : "mainnet",
   });
-  const backendResponse = await broadcaster.broadcast(
+  await broadcaster.broadcast(
     Transaction.fromAtomicBEEF(tx)
   );
+
+  return;
+}
+
+
+export async function uploadReactionWithFee({
+  topic_txid,
+  parentPostTxid,
+  directParentTxid,
+  reaction,
+  feeRecipientPublicKey,
+  feeSatoshis,
+  recipientPublicKey,
+  recipientSatoshis,
+}: {
+  topic_txid: string;
+  parentPostTxid: string;
+  directParentTxid: string;
+  reaction: string;
+  feeRecipientPublicKey: string;
+  feeSatoshis: number;
+  recipientPublicKey?: string;
+  recipientSatoshis?: number;
+}) {
+  const type = "reaction";
+
+  const createdBy = (await wallet.getPublicKey({ identityKey: true }))
+    .publicKey;
+  const fields = [
+    Utils.toArray(type, "utf8"),
+    Utils.toArray(topic_txid, "utf8"),
+    Utils.toArray(parentPostTxid, "utf8"),
+    Utils.toArray(directParentTxid, "utf8"),
+    Utils.toArray(reaction, "utf8"),
+    Utils.toArray("" + createdBy, "utf8"),
+    ...(recipientPublicKey ? [Utils.toArray("" + recipientPublicKey, "utf8")] : []),
+  ];
+
+  const reactionLockingScript = await pushdrop.lock(
+    fields,
+    [constants.securityProtocol, constants.protocolId],
+    "1",
+    "anyone",
+    true
+  );
+
+  const outputs: { lockingScript: string; satoshis: number; outputDescription: string }[] = [];
+
+  // Optional server fee output if configured (non-empty and >0)
+  if ((feeRecipientPublicKey || '').trim() && typeof feeSatoshis === 'number' && feeSatoshis > 0) {
+    const feeLockingScript = new P2PKH()
+      .lock(PublicKey.fromString(feeRecipientPublicKey).toAddress())
+      .toHex();
+    outputs.push({
+      lockingScript: feeLockingScript,
+      satoshis: feeSatoshis,
+      outputDescription: "Reaction fee",
+    });
+  }
+
+  // The reaction output itself
+  outputs.push({
+    lockingScript: reactionLockingScript.toHex(),
+    satoshis: 1,
+    outputDescription: "Uploading a reaction to forum",
+  });
+
+  // Enforced recipient payout based on emoji price
+  const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;
+  const payoutSats = typeof recipientSatoshis === 'number' && recipientSatoshis > 0 ? recipientSatoshis : emojiPrice;
+  if (recipientPublicKey && payoutSats > 0) {
+    const recipientScript = new P2PKH()
+      .lock(PublicKey.fromString(recipientPublicKey).toAddress())
+      .toHex();
+    outputs.push({
+      lockingScript: recipientScript,
+      satoshis: payoutSats,
+      outputDescription: "Reaction recipient payout",
+    });
+  }
+
+  const { tx } = await wallet.createAction({
+    outputs,
+    description: "Publish a reaction (with fee)",
+    options: {
+      acceptDelayedBroadcast: false,
+      randomizeOutputs: false,
+    },
+  });
+
+  if (!tx) {
+    throw new Error("Error creating action");
+  }
+  const broadcaster = new TopicBroadcaster([constants.topicManager], {
+    networkPreset:
+      window.location.hostname === "localhost" ? "local" : "mainnet",
+  });
+  await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx));
 
   return;
 }

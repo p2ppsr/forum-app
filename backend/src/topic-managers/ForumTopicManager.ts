@@ -1,6 +1,7 @@
 import { AdmittanceInstructions, TopicManager } from "@bsv/overlay";
 import docs from "./ForumTopicDocs.md.js";
-import { PublicKey, PushDrop, Transaction, Utils } from "@bsv/sdk";
+import { PublicKey, PushDrop, Transaction, Utils, P2PKH } from "@bsv/sdk";
+import constants from "../const.js";
 
 /**
  * Forum for a Topic Manager that can be modified for your specific use-case.
@@ -53,7 +54,7 @@ export default class ForumTopicManager implements TopicManager {
 
           // Check if the output is a reaction
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "reaction") {
-            (await this.checkReaction(fields))
+            (await this.checkReaction(fields, outputs, index))
               ? admissibleOutputs.push(index)
               : console.log("Invalid reaction");
             continue;
@@ -249,8 +250,9 @@ export default class ForumTopicManager implements TopicManager {
     return true;
   }
 
-  async checkReaction(fields: number[][]) {
+  async checkReaction(fields: number[][], outputs: any[], reactionIndex: number) {
     try {
+      // Require recipient identity key included (7th field)
       if (fields.length !== 7) {
         console.log("Invalid reaction fields length");
         return false;
@@ -276,10 +278,48 @@ export default class ForumTopicManager implements TopicManager {
         return false;
       }
 
+      // Validate creator and recipient public keys
+      let createdByStr = "";
+      let recipientKeyStr = "";
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[5])));
+        createdByStr = Utils.toUTF8(Utils.toArray(fields[5]));
+        PublicKey.fromString(createdByStr);
       } catch {
-        console.log("Invalid public key format.");
+        console.log("Invalid public key format for createdBy.");
+        return false;
+      }
+      try {
+        recipientKeyStr = Utils.toUTF8(Utils.toArray(fields[6]));
+        PublicKey.fromString(recipientKeyStr);
+      } catch {
+        console.log("Invalid recipient public key format.");
+        return false;
+      }
+
+      // Determine required payout from emoji price map
+      const emoji = Utils.toUTF8(Utils.toArray(fields[4]));
+      const requiredSats = constants.emojiPrices[emoji] ?? 0;
+      if (!(requiredSats > 0)) {
+        console.log("No price configured for emoji");
+        return false;
+      }
+
+      const expectedRecipientScriptHex = new P2PKH()
+        .lock(PublicKey.fromString(recipientKeyStr).toAddress())
+        .toHex();
+
+      const hasValidPayout = outputs.some((o) => {
+        try {
+          const scriptHex = o.lockingScript.toHex();
+          const sats = o.satoshis;
+          return scriptHex === expectedRecipientScriptHex && typeof sats === 'number' && sats >= requiredSats;
+        } catch {
+          return false;
+        }
+      });
+
+      if (!hasValidPayout) {
+        console.log("No valid recipient payout found in transaction");
         return false;
       }
     } catch (error) {

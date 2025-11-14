@@ -1,6 +1,6 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import FormatPosts from "./FormatPosts";
-import type { Post, Topic, PostContext } from "../utils/types";
+import type { Topic, PostContext } from "../utils/types";
 import { useEffect, useState } from "react";
 import { topicExists } from "../utils/topicExists";
 import { fetchAllPosts } from "../utils/forumFetches";

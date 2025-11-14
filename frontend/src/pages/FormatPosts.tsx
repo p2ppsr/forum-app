@@ -1,6 +1,6 @@
 import { Stack } from "@mui/material";
 import PostCard from "../components/PostCard";
-import type { Post, PostContext } from "../utils/types";
+import type { PostContext } from "../utils/types";
 
 type Props = {
   posts: PostContext[];

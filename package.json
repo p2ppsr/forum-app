@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "lars": "lars",
-    "cars": "cars"
+    "cars": "cars",
+    "nuke": "rm -rf node_modules package-lock.json local-data && npm install"
   },
   "dependencies": {
     "@bsv/cars-cli": "^1.2.9",
