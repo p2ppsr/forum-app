@@ -92,7 +92,7 @@ export default function PostCard({
       reaction: emoji,
       feeRecipientPublicKey: feeKey,
       feeSatoshis: Number.isFinite(feeSats) && feeSats > 0 ? feeSats : 0,
-      recipientPublicKey: (postContext.post.createdBy || '').trim() || undefined,
+      recipientPublicKey: (postContext.post.createdBy || '').trim(),
     });
   };
 

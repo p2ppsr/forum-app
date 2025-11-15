@@ -283,13 +283,17 @@ export async function uploadReactionWithFee({
   reaction: string;
   feeRecipientPublicKey: string;
   feeSatoshis: number;
-  recipientPublicKey?: string;
+  recipientPublicKey: string;
   recipientSatoshis?: number;
 }) {
   const type = "reaction";
 
   const createdBy = (await wallet.getPublicKey({ identityKey: true }))
     .publicKey;
+  if (!(recipientPublicKey && recipientPublicKey.trim())) {
+    throw new Error("recipientPublicKey required for reaction payout");
+  }
+
   const fields = [
     Utils.toArray(type, "utf8"),
     Utils.toArray(topic_txid, "utf8"),
@@ -297,7 +301,7 @@ export async function uploadReactionWithFee({
     Utils.toArray(directParentTxid, "utf8"),
     Utils.toArray(reaction, "utf8"),
     Utils.toArray("" + createdBy, "utf8"),
-    ...(recipientPublicKey ? [Utils.toArray("" + recipientPublicKey, "utf8")] : []),
+    Utils.toArray("" + recipientPublicKey, "utf8"),
   ];
 
   const reactionLockingScript = await pushdrop.lock(
@@ -310,6 +314,13 @@ export async function uploadReactionWithFee({
 
   const outputs: { lockingScript: string; satoshis: number; outputDescription: string }[] = [];
 
+  // Put the reaction output first for consistency
+  outputs.push({
+    lockingScript: reactionLockingScript.toHex(),
+    satoshis: 1,
+    outputDescription: "Uploading a reaction to forum",
+  });
+
   // Optional server fee output if configured (non-empty and >0)
   if ((feeRecipientPublicKey || '').trim() && typeof feeSatoshis === 'number' && feeSatoshis > 0) {
     const feeLockingScript = new P2PKH()
@@ -321,13 +332,6 @@ export async function uploadReactionWithFee({
       outputDescription: "Reaction fee",
     });
   }
-
-  // The reaction output itself
-  outputs.push({
-    lockingScript: reactionLockingScript.toHex(),
-    satoshis: 1,
-    outputDescription: "Uploading a reaction to forum",
-  });
 
   // Enforced recipient payout based on emoji price
   const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;

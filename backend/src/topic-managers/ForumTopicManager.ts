@@ -296,9 +296,13 @@ export default class ForumTopicManager implements TopicManager {
         return false;
       }
 
-      // Determine required payout from emoji price map
-      const emoji = Utils.toUTF8(Utils.toArray(fields[4]));
-      const requiredSats = constants.emojiPrices[emoji] ?? 0;
+      // Determine required payout from emoji price map (normalize variants)
+      const rawEmoji = Utils.toUTF8(Utils.toArray(fields[4]));
+      const baseEmoji = rawEmoji
+        .replace(/\uFE0F/g, '')
+        .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '');
+      const emojiKey = (constants.emojiPrices as any)[rawEmoji] ? rawEmoji : baseEmoji;
+      const requiredSats = constants.emojiPrices[emojiKey] ?? 0;
       if (!(requiredSats > 0)) {
         console.log("No price configured for emoji");
         return false;
@@ -310,8 +314,9 @@ export default class ForumTopicManager implements TopicManager {
 
       const hasValidPayout = outputs.some((o) => {
         try {
-          const scriptHex = o.lockingScript.toHex();
-          const sats = o.satoshis;
+          const ls: any = (o as any).lockingScript;
+          const scriptHex = typeof ls === 'string' ? ls : (typeof ls?.toHex === 'function' ? ls.toHex() : '');
+          const sats = (o as any).satoshis;
           return scriptHex === expectedRecipientScriptHex && typeof sats === 'number' && sats >= requiredSats;
         } catch {
           return false;
