@@ -131,6 +131,10 @@ export class ForumLookupService implements LookupService {
       {
           return await this.storage.findAllReactions()
       }
+      if(query === 'getReactionByTxid' && parameter)
+      {
+        return await this.storage.findReactionByTxid(parameter)
+      }
 
       throw new Error('Unknown query type: ' + query + ' with parameter: ' + parameter);
     }

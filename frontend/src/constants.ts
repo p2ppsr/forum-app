@@ -16,8 +16,8 @@ interface Constants {
   constants = { 
     protocolId: "blockit" ,
     securityProtocol: 1,
-    topicManager: "tm_block",
-    lookupService: "ls_block",
+    topicManager: "tm_peepeepoopoo",
+    lookupService: "ls_peepeepoopoo",
     reactionFeePublicKey: "",
     reactionFeeSatoshis: 0,
     reactionRecipientSatoshis: 0,

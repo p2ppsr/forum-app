@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import type { PostContext } from "../utils/types";
 import { useMemo } from "react";
-import { uploadReactionWithFee } from "../utils/upload";
+import { uploadReaction } from "../utils/upload";
 import constants from "../constants";
 import ReactionBar, { type ReactionCounts } from "../emoji/ReactionBar";
 
@@ -85,7 +85,7 @@ export default function PostCard({
     const feeKey = (constants.reactionFeePublicKey || "").trim();
     const feeSats = Number(constants.reactionFeeSatoshis || 0);
 
-    await uploadReactionWithFee({
+    await uploadReaction({
       topic_txid: postContext.post.topicId,
       parentPostTxid: postContext.post.id,
       directParentTxid: postContext.post.id,

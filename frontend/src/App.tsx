@@ -9,12 +9,10 @@ import ClaimPage from "./pages/Claim";
 import type { Topic } from "./utils/types";
 import { fetchAllTopics } from "./utils/forumFetches";
 
-/** "Cute Cats!!!" -> "cute-cats" */
-
 type RouteState =
   | { name: "home" }
   | { name: "upload" }
-  | { name: "topic"; slug: string }          // slug is the exact topic string
+  | { name: "topic"; slug: string }
   | { name: "post"; query: Record<string, string> }
   | { name: "postDetail"; topic: string; postTxid: string }
   | { name: "claim" };
@@ -22,7 +20,7 @@ type RouteState =
 function parseHashToRoute(hash: string): RouteState {
   const raw = (hash || "").replace(/^#\/?/, "");
   const [pathPart, queryPart] = raw.split("?");
-  const path = decodeURIComponent(pathPart || "");  // keeps support if someone pastes encoded chars
+  const path = decodeURIComponent(pathPart || "");
   const parts = path.split("/").filter(Boolean);
 
   if (!path || path === "home") return { name: "home" };
@@ -38,7 +36,7 @@ function parseHashToRoute(hash: string): RouteState {
     params.forEach((v, k) => (query[k] = v));
     return { name: "post", query };
   }
-  return { name: "topic", slug: path };            // treat anything else as the topic title
+  return { name: "topic", slug: path };
 }
 
 export default function App() {

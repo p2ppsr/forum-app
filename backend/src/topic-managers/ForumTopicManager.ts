@@ -24,6 +24,7 @@ export default class ForumTopicManager implements TopicManager {
       const outputs = decodedTx.outputs;
 
       for (const [index, output] of outputs.entries()) {
+        console.log("INDEX!!!!!!!:", index)
         try {
           const decodedScript = PushDrop.decode(output.lockingScript);
           const fields = decodedScript.fields;
@@ -55,7 +56,7 @@ export default class ForumTopicManager implements TopicManager {
           // Check if the output is a reaction
           if (Utils.toUTF8(Utils.toArray(fields[0])) === "reaction") {
             (await this.checkReaction(fields, outputs, index))
-              ? admissibleOutputs.push(index)
+              ? (admissibleOutputs.push(index), console.log("ADMITTED INDEX: " + index))
               : console.log("Invalid reaction");
             continue;
           }
@@ -253,7 +254,7 @@ export default class ForumTopicManager implements TopicManager {
   async checkReaction(fields: number[][], outputs: any[], reactionIndex: number) {
     try {
       // Require recipient identity key included (7th field)
-      if (fields.length !== 7) {
+      if (fields.length !== 10) {
         console.log("Invalid reaction fields length");
         return false;
       }
@@ -296,6 +297,16 @@ export default class ForumTopicManager implements TopicManager {
         return false;
       }
 
+      if (fields[7].length === 0) {
+        console.log("Invalid reaction derivation prefix");
+        return false;
+      }
+
+      if (fields[8].length === 0) {
+        console.log("Invalid reaction derivation suffix");
+        return false;
+      }
+      
       // Determine required payout from emoji price map (normalize variants)
       const rawEmoji = Utils.toUTF8(Utils.toArray(fields[4]));
       const baseEmoji = rawEmoji

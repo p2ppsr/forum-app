@@ -1,7 +1,6 @@
 import { Collection, Db } from 'mongodb'
 import { ForumRecord, UTXOReference } from '../types'
 import { Metadata } from '../types'
-import { fromUtxo } from '@bsv/sdk'
 // Forum for a Storage System that can be modified for your specific use-case.
 export class ForumStorage {
   private readonly posts: Collection<ForumRecord>
@@ -45,6 +44,18 @@ export class ForumStorage {
         })
       break
       case 'reaction':
+
+        console.log('reaction:')
+        console.log(txid)
+        console.log(outputIndex)
+        console.log(metadata.field1)
+        console.log(metadata.field2)
+        console.log(metadata.field3)
+        console.log(metadata.field4)
+        console.log(metadata.field5)
+        
+        console.log(metadata.payoutSats)
+
         await this.reactions.insertOne({
           txid,
           outputIndex,
@@ -164,5 +175,13 @@ export class ForumStorage {
     }
     return utxos
   }
-
+  async findReactionByTxid({txid, outputIndex}: {txid: string, outputIndex: number}): Promise<UTXOReference[]> {
+    let utxos = [] as UTXOReference[]
+    const reaction = await this.reactions.findOne({txid: txid, outputIndex: outputIndex})
+    if(reaction)
+    {
+      utxos.push({txid: reaction.txid, outputIndex: reaction.outputIndex})
+    }
+    return utxos
+  }
 }
