@@ -11,7 +11,6 @@ import {
 import type { PostContext } from "../utils/types";
 import { useMemo } from "react";
 import { uploadReaction } from "../utils/upload";
-import constants from "../constants";
 import ReactionBar, { type ReactionCounts } from "../emoji/ReactionBar";
 
 const normalizeReaction = (s?: string) => {
@@ -82,16 +81,12 @@ export default function PostCard({
 
   // Send a reaction to chain (ReactionBar does optimistic UI internally)
   const onReact = async (emoji: string) => {
-    const feeKey = (constants.reactionFeePublicKey || "").trim();
-    const feeSats = Number(constants.reactionFeeSatoshis || 0);
 
     await uploadReaction({
       topic_txid: postContext.post.topicId,
       parentPostTxid: postContext.post.id,
       directParentTxid: postContext.post.id,
       reaction: emoji,
-      feeRecipientPublicKey: feeKey,
-      feeSatoshis: Number.isFinite(feeSats) && feeSats > 0 ? feeSats : 0,
       recipientPublicKey: (postContext.post.createdBy || '').trim(),
     });
   };

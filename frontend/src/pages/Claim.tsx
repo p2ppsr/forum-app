@@ -11,15 +11,12 @@ import {
 } from '@mui/material';
 import {
   LookupResolver,
-  P2PKH,
-  PublicKey,
   PushDrop,
   Transaction,
   Utils,
   ProtoWallet,
   WalletClient,
-  type AtomicBEEF,
-} from '@bsv/sdk';
+  } from '@bsv/sdk';
 import constants from '../constants';
 
 type Claimable = {
@@ -45,9 +42,6 @@ export default function ClaimPage() {
     try {
       const userPubKey = (await wallet.getPublicKey({ identityKey: true }))
         .publicKey;
-      const userLockingScriptHex = new P2PKH()
-        .lock(PublicKey.fromString(userPubKey).toAddress())
-        .toHex();
       // Query backend lookup for all reactions
       const resolver = new LookupResolver({
         networkPreset:
@@ -55,15 +49,15 @@ export default function ClaimPage() {
       });
       const question = {
         service: constants.lookupService,
-        query: { query: 'getAllReactions' },
+        query: { query: 'getpaymentsfor', parameter: { publicKey: userPubKey } },
       } as any;
       const lookupResult = await resolver.query(question);
       if (lookupResult.type !== 'output-list') {
         throw new Error('Unexpected response from lookup service');
       }
-      console.log("lookupResult", lookupResult)
       const next: Claimable[] = [];
-
+      console.log("lookupResult",lookupResult)
+      
       for (const out of lookupResult.outputs) {
         try {
           const tx = await Transaction.fromBEEF(out.beef);
@@ -79,47 +73,44 @@ export default function ClaimPage() {
             emoji = Utils.toUTF8(Utils.toArray(f[4]));
             fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
           }
-
-          // for (const o of tx.outputs) {
-          //   try {
-          //     const decoded = await PushDrop.decode(o.lockingScript as any);
-          //     const f = decoded.fields;
-          //     const type = Utils.toUTF8(Utils.toArray(f[0]));
-          //     if (type === 'reaction') {
-          //       emoji = Utils.toUTF8(Utils.toArray(f[4]));
-          //       fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
-          //       break;
-          //     }
-          //   } catch {
-          //     /* not a pushdrop */
-          //   }
-          // }
-
-          // Find a payout to the current user
-          // tx.outputs.forEach((o, idx) => {
-          //   console.log("o", o)
-          //   try {
-          //     const scriptHex = o.lockingScript.toHex();
-
-                next.push({
-                  tx: tx,
-                  beef: out.beef,
-                  txid: tx.id('hex'),
-                  outputIndex: 1,
-                  satoshis: tx.outputs[1].satoshis,
-                  emoji,
-                  fromPubKey,
-                });
-          //   } catch {
-          //     /* ignore */
-          //   }
-          // });
+          if(tx.outputs[1].satoshis){
+          next.push({
+            tx: tx,
+            beef: out.beef,
+            txid: tx.id('hex'),
+            outputIndex: 1,
+            satoshis: tx.outputs[1].satoshis,
+            emoji,
+            fromPubKey,
+          });
+        }
         } catch {
-          /* ignore tx parse errors */
         }
       }
 
-      setItems(next);
+        const baskettedPayments = await wallet.listOutputs({
+          basket: 'claimedReactionPayment',
+        })
+
+        const baskettedArr = Array.isArray(baskettedPayments)
+          ? baskettedPayments
+          : (baskettedPayments?.outputs ?? []);
+
+        const claimedTxids = new Set(
+          baskettedArr
+            .map((o: any) => {
+              const op = o?.outpoint ?? o?.outPoint ?? o?.out_point;
+              if (typeof op === 'string') {
+                return op.split(/[.:]/)[0];
+              }
+              if (o?.txid || o?.txId) return (o.txid ?? o.txId);
+              return null;
+            })
+            .filter((v: any): v is string => Boolean(v))
+        );
+        const filteredNext = next.filter((c) => !claimedTxids.has(c.txid));
+
+        setItems(filteredNext);
     } catch (e: any) {
       setError(e?.message || String(e));
     } finally {
@@ -170,6 +161,13 @@ export default function ClaimPage() {
           tx: c.tx.toAtomicBEEF(),
           outputs: [
             {
+              insertionRemittance: {
+                basket: "claimedReactionPayment",
+              },
+              outputIndex: 0,
+              protocol: 'basket insertion',
+            },
+            {
               paymentRemittance: {
                 derivationPrefix: derivationPrefix,
                 derivationSuffix: derivationSuffix,
@@ -182,12 +180,7 @@ export default function ClaimPage() {
           labels: ['reaction-payout'],
           description: `Claim reaction payout ${c.emoji}`,
         });
-
-        // setItems((prev) =>
-        //   prev.filter(
-        //     (x) => !(x.txid === c.txid && x.outputIndex === c.outputIndex)
-        //   )
-        // );
+      
       } catch (e) {
         console.error(e);
       } finally {

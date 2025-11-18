@@ -8,7 +8,7 @@ import {
   P2PKH,
   ProtoWallet,
 } from '@bsv/sdk';
-import BabbageGo from '@babbage/go';
+// import BabbageGo from '@babbage/go';
 import constants from '../constants';
 
 function randomBase64(length: number): string {
@@ -225,19 +225,13 @@ export async function uploadReaction({
   parentPostTxid,
   directParentTxid,
   reaction,
-  feeRecipientPublicKey,
-  feeSatoshis,
   recipientPublicKey,
-  recipientSatoshis,
 }: {
   topic_txid: string;
   parentPostTxid: string;
   directParentTxid: string;
   reaction: string;
-  feeRecipientPublicKey: string;
-  feeSatoshis: number;
   recipientPublicKey: string;
-  recipientSatoshis?: number;
 }) {
   const type = 'reaction';
 
@@ -286,9 +280,7 @@ export async function uploadReaction({
   // Optional server fee output if configured (non-empty and >0)
   const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;
   console.log("emojiPrice", emojiPrice);
-    debugger
     let anyoneWallet = await new ProtoWallet("anyone")
-    debugger
     const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
       protocolID: [2, '3241645161d8'],
       keyID: `${derivationPrefix} ${derivationSuffix}`,
@@ -319,7 +311,6 @@ export async function uploadReaction({
       randomizeOutputs: false,
     },
   });
-  console.log("tx",Transaction.fromAtomicBEEF(tx))
   if (!tx) {
     throw new Error('Error creating action');
   }
