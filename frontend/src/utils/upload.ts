@@ -6,6 +6,7 @@ import {
   Transaction,
   PublicKey,
   P2PKH,
+  ProtoWallet,
 } from '@bsv/sdk';
 import BabbageGo from '@babbage/go';
 import constants from '../constants';
@@ -16,17 +17,17 @@ function randomBase64(length: number): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
-  monetization: {
-    developerFeeSats: 10,
-    developerIdentity:
-      '025a2cb22976ff42743e4b168f853021b1042aa392792743d60b1234e9d5de5efe',
-  },
-  walletUnavailable: {
-    title: 'REEEEEEEEE JACKIE TODO',
-  },
-});
-
+// const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
+//   monetization: {
+//     developerFeeSats: 10,
+//     developerIdentity:
+//       '025a2cb22976ff42743e4b168f853021b1042aa392792743d60b1234e9d5de5efe',
+//   },
+//   walletUnavailable: {
+//     title: 'REEEEEEEEE JACKIE TODO',
+//   },
+// });
+const wallet = new WalletClient('auto');
 const pushdrop = new PushDrop(wallet);
 
 export async function uploadTopic({
@@ -265,7 +266,7 @@ export async function uploadReaction({
     fields,
     [constants.securityProtocol, constants.protocolId],
     '1',
-    'anyone',
+    recipientPublicKey,
     true
   );
 
@@ -283,48 +284,33 @@ export async function uploadReaction({
   });
 
   // Optional server fee output if configured (non-empty and >0)
-  if (
-    (feeRecipientPublicKey || '').trim() &&
-    typeof feeSatoshis === 'number' &&
-    feeSatoshis > 0
-  ) {
-
-    const { publicKey: derivedPublicKey } = await wallet.getPublicKey({
+  const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;
+  console.log("emojiPrice", emojiPrice);
+    debugger
+    let anyoneWallet = await new ProtoWallet("anyone")
+    debugger
+    const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
       protocolID: [2, '3241645161d8'],
       keyID: `${derivationPrefix} ${derivationSuffix}`,
-      counterparty: feeRecipientPublicKey
+      counterparty: recipientPublicKey
     })
-
-
+    console.log("recipientPublicKey", recipientPublicKey)
+    console.log("derivedPublicKey", derivedPublicKey)
     const feeLockingScript = new P2PKH()
       .lock(PublicKey.fromString(derivedPublicKey).toAddress())
       .toHex();
     outputs.push({
       lockingScript: feeLockingScript,
-      satoshis: feeSatoshis,
+      satoshis: emojiPrice,
       outputDescription: 'Reaction fee',
     });
-  }
 
-  // Enforced recipient payout based on emoji price
-  const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;
-  const payoutSats =
-    typeof recipientSatoshis === 'number' && recipientSatoshis > 0
-      ? recipientSatoshis
-      : emojiPrice;
-  if (recipientPublicKey && payoutSats > 0) {
-    const recipientScript = new P2PKH()
-      .lock(PublicKey.fromString(recipientPublicKey).toAddress())
-      .toHex();
-    outputs.push({
-      lockingScript: recipientScript,
-      satoshis: payoutSats,
-      outputDescription: 'Reaction recipient payout',
-    });
-  }
-
-  console.log(outputs);
-
+  console.log("outputs", outputs);
+  console.log("Expectedhex", feeLockingScript);
+  console.log("satoshis", emojiPrice)
+  console.log("recipientPublicKey", recipientPublicKey)
+  console.log("derivationPrefix", derivationPrefix)
+  console.log("derivationSuffix", derivationSuffix)
   const { tx } = await wallet.createAction({
     outputs,
     description: 'Publish a reaction (with fee)',
@@ -333,7 +319,7 @@ export async function uploadReaction({
       randomizeOutputs: false,
     },
   });
-
+  console.log("tx",Transaction.fromAtomicBEEF(tx))
   if (!tx) {
     throw new Error('Error creating action');
   }

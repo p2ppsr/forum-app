@@ -1,6 +1,6 @@
 import { AdmittanceInstructions, TopicManager } from "@bsv/overlay";
 import docs from "./ForumTopicDocs.md.js";
-import { PublicKey, PushDrop, Transaction, Utils, P2PKH } from "@bsv/sdk";
+import { PublicKey, PushDrop, Transaction, Utils, P2PKH, ProtoWallet } from "@bsv/sdk";
 import constants from "../const.js";
 
 /**
@@ -319,23 +319,57 @@ export default class ForumTopicManager implements TopicManager {
         console.log("No price configured for emoji");
         return false;
       }
-
+      console.log("fields8", Utils.toUTF8(fields[8]))
+      console.log("fields7", Utils.toUTF8(fields[7]))
+    let anyoneWallet = new ProtoWallet("anyone")
+       const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
+      protocolID: [2, '3241645161d8'],
+      keyID: `${Utils.toUTF8(fields[7])} ${Utils.toUTF8(fields[8])}`,
+      counterparty: recipientKeyStr
+    })
       const expectedRecipientScriptHex = new P2PKH()
-        .lock(PublicKey.fromString(recipientKeyStr).toAddress())
+        .lock(PublicKey.fromString(derivedPublicKey).toAddress())
         .toHex();
 
-      const hasValidPayout = outputs.some((o) => {
+      console.log("outputs", outputs)
+      let hasvalid = false;
         try {
-          const ls: any = (o as any).lockingScript;
-          const scriptHex = typeof ls === 'string' ? ls : (typeof ls?.toHex === 'function' ? ls.toHex() : '');
-          const sats = (o as any).satoshis;
-          return scriptHex === expectedRecipientScriptHex && typeof sats === 'number' && sats >= requiredSats;
-        } catch {
-          return false;
+          const ls: any = outputs[1].lockingScript;
+          const scriptHex = outputs[1].lockingScript.toHex()
+          const sats = outputs[1].satoshis;
+          console.log("////////////////////////////////////////////////////////////\n");
+          console.log("outputlockingScript", outputs[1].lockingScript.toHex())
+          console.log("scriptHex", scriptHex);
+          console.log("expectedRecipientScriptHex", expectedRecipientScriptHex);
+          console.log("sats", sats);
+          console.log("requiredSats", requiredSats);
+          if(scriptHex === expectedRecipientScriptHex)
+          {
+            if(typeof sats === 'number' && sats >= requiredSats)
+            {
+              if(sats >= requiredSats)
+              {
+                hasvalid = true;
+              }
+              else{
+                console.log("Invalid sats");
+              }
+            }
+            else{
+              console.log("Invalid sats");
+            }
+          }
+          else{
+            console.log("Invalid recipient script hex");
+          }
+        } catch (e) {
+          console.log("Error checking reaction payout", e);
         }
-      });
+        finally{
+          console.log("////////////////////////////////////////////////////////////\n");
+        } 
 
-      if (!hasValidPayout) {
+      if (!hasvalid) {
         console.log("No valid recipient payout found in transaction");
         return false;
       }

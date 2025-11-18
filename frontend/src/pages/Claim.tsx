@@ -16,12 +16,15 @@ import {
   PushDrop,
   Transaction,
   Utils,
+  ProtoWallet,
   WalletClient,
   type AtomicBEEF,
 } from '@bsv/sdk';
 import constants from '../constants';
 
 type Claimable = {
+  tx: any,
+  beef: number[],
   txid: string;
   outputIndex: number;
   satoshis: number;
@@ -45,7 +48,6 @@ export default function ClaimPage() {
       const userLockingScriptHex = new P2PKH()
         .lock(PublicKey.fromString(userPubKey).toAddress())
         .toHex();
-
       // Query backend lookup for all reactions
       const resolver = new LookupResolver({
         networkPreset:
@@ -59,7 +61,7 @@ export default function ClaimPage() {
       if (lookupResult.type !== 'output-list') {
         throw new Error('Unexpected response from lookup service');
       }
-
+      console.log("lookupResult", lookupResult)
       const next: Claimable[] = [];
 
       for (const out of lookupResult.outputs) {
@@ -69,43 +71,49 @@ export default function ClaimPage() {
           // Find the reaction PushDrop output to extract emoji and reactor pubkey
           let emoji = '';
           let fromPubKey = '';
-          for (const o of tx.outputs) {
-            try {
-              const decoded = await PushDrop.decode(o.lockingScript as any);
-              const f = decoded.fields;
-              const type = Utils.toUTF8(Utils.toArray(f[0]));
-              if (type === 'reaction') {
-                emoji = Utils.toUTF8(Utils.toArray(f[4]));
-                fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
-                break;
-              }
-            } catch {
-              /* not a pushdrop */
-            }
+          tx.outputs[0].lockingScript
+          const decoded = await PushDrop.decode(tx.outputs[0].lockingScript as any);
+          const f = decoded.fields;
+          const type = Utils.toUTF8(Utils.toArray(f[0]));
+          if (type === 'reaction') {
+            emoji = Utils.toUTF8(Utils.toArray(f[4]));
+            fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
           }
 
+          // for (const o of tx.outputs) {
+          //   try {
+          //     const decoded = await PushDrop.decode(o.lockingScript as any);
+          //     const f = decoded.fields;
+          //     const type = Utils.toUTF8(Utils.toArray(f[0]));
+          //     if (type === 'reaction') {
+          //       emoji = Utils.toUTF8(Utils.toArray(f[4]));
+          //       fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
+          //       break;
+          //     }
+          //   } catch {
+          //     /* not a pushdrop */
+          //   }
+          // }
+
           // Find a payout to the current user
-          tx.outputs.forEach((o, idx) => {
-            ``;
-            try {
-              const scriptHex = o.lockingScript.toHex();
-              if (
-                scriptHex === userLockingScriptHex &&
-                typeof o.satoshis === 'number' &&
-                o.satoshis > 0
-              ) {
+          // tx.outputs.forEach((o, idx) => {
+          //   console.log("o", o)
+          //   try {
+          //     const scriptHex = o.lockingScript.toHex();
+
                 next.push({
+                  tx: tx,
+                  beef: out.beef,
                   txid: tx.id('hex'),
-                  outputIndex: idx,
-                  satoshis: o.satoshis,
+                  outputIndex: 1,
+                  satoshis: tx.outputs[1].satoshis,
                   emoji,
                   fromPubKey,
                 });
-              }
-            } catch {
-              /* ignore */
-            }
-          });
+          //   } catch {
+          //     /* ignore */
+          //   }
+          // });
         } catch {
           /* ignore tx parse errors */
         }
@@ -148,25 +156,24 @@ export default function ClaimPage() {
         console.log("result",result )
         console.log("c.txid",c.txid)
         console.log("c",c)
-        console.log("derivationPrefix",result.outputs[1].lockingScript)
-        
-        debugger
-        // console.log(result.outputs[c.outputIndex].lockingScript)
-        // const fields = PushDrop.decode(result.outputs[c.outputIndex].lockingScript)
-        // console.log(fields)
-        //const outputs = result.outputs[outputIndex]
-        debugger
+        console.log("derivationPrefix",derivationPrefix)
+        console.log("derivationSuffix",derivationSuffix)
+        console.log("c.fromPubKey",c.fromPubKey)
 
-
+        let anyoneWallet = new ProtoWallet("anyone")
+        const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
+          identityKey: true,
+        })
+        console.log("derivedPublicKey", derivedPublicKey)
         // Internalize the specific output into the wallet
         await wallet.internalizeAction({
-          tx: result.outputs[1].lockingScript,
+          tx: c.tx.toAtomicBEEF(),
           outputs: [
             {
               paymentRemittance: {
                 derivationPrefix: derivationPrefix,
                 derivationSuffix: derivationSuffix,
-                senderIdentityKey: c.fromPubKey,
+                senderIdentityKey: derivedPublicKey,
               },
               outputIndex: c.outputIndex,
               protocol: 'wallet payment',
