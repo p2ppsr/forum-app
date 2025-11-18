@@ -141,24 +141,31 @@ export default function ClaimPage() {
 
         const result = Transaction.fromBEEF(lookupResult.outputs[0].beef)
         if (!result) throw new Error('Transaction not found in lookup index');
-
-        console.log(c.txid)
-        debugger
-        console.log(result.outputs[c.outputIndex].lockingScript)
-        const fields = PushDrop.decode(result.outputs[c.outputIndex].lockingScript)
+        const fields = PushDrop.decode(result.outputs[0].lockingScript)
         console.log(fields)
+        let derivationPrefix = Utils.toUTF8(fields.fields[7])
+        let derivationSuffix = Utils.toUTF8(fields.fields[8])
+        console.log("result",result )
+        console.log("c.txid",c.txid)
+        console.log("c",c)
+        console.log("derivationPrefix",result.outputs[1].lockingScript)
+        
+        debugger
+        // console.log(result.outputs[c.outputIndex].lockingScript)
+        // const fields = PushDrop.decode(result.outputs[c.outputIndex].lockingScript)
+        // console.log(fields)
         //const outputs = result.outputs[outputIndex]
         debugger
 
 
         // Internalize the specific output into the wallet
         await wallet.internalizeAction({
-          tx: Utils.toArray(result, 'base64') as AtomicBEEF,
+          tx: result.outputs[1].lockingScript,
           outputs: [
             {
               paymentRemittance: {
-                derivationPrefix: '0',
-                derivationSuffix: '0',
+                derivationPrefix: derivationPrefix,
+                derivationSuffix: derivationSuffix,
                 senderIdentityKey: c.fromPubKey,
               },
               outputIndex: c.outputIndex,
@@ -169,11 +176,11 @@ export default function ClaimPage() {
           description: `Claim reaction payout ${c.emoji}`,
         });
 
-        setItems((prev) =>
-          prev.filter(
-            (x) => !(x.txid === c.txid && x.outputIndex === c.outputIndex)
-          )
-        );
+        // setItems((prev) =>
+        //   prev.filter(
+        //     (x) => !(x.txid === c.txid && x.outputIndex === c.outputIndex)
+        //   )
+        // );
       } catch (e) {
         console.error(e);
       } finally {

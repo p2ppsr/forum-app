@@ -22,7 +22,8 @@ export default class ForumTopicManager implements TopicManager {
     try {
       const decodedTx = Transaction.fromBEEF(beef);
       const outputs = decodedTx.outputs;
-
+      console.log("outputs: ", outputs)
+      console.log("outputs number: ", outputs.length)
       for (const [index, output] of outputs.entries()) {
         console.log("INDEX!!!!!!!:", index)
         try {

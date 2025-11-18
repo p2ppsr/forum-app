@@ -37,6 +37,8 @@ export class ForumLookupService implements LookupService {
     {
       const decodedOutput = await PushDrop.decode(lockingScript)
       const fields = decodedOutput.fields
+      console.log("output: ", decodedOutput)
+      console.log("fields: ", fields)
      if(Utils.toUTF8(Utils.toArray(fields[0])) == 'post' )
       {
         await this.storage.storeRecord(txid, outputIndex, 'post', {field1: Utils.toUTF8(Utils.toArray(fields[1]))} )
