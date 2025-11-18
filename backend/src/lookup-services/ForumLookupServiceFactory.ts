@@ -137,7 +137,10 @@ export class ForumLookupService implements LookupService {
       {
         return await this.storage.findReactionByTxid(parameter)
       }
-
+      if(query === 'getpaymentsfor' && parameter)
+      {
+        return await this.storage.findPaymentsForUser(parameter.publicKey)
+      }
       throw new Error('Unknown query type: ' + query + ' with parameter: ' + parameter);
     }
 

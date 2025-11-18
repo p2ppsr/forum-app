@@ -184,4 +184,16 @@ export class ForumStorage {
     }
     return utxos
   }
+  async findPaymentsForUser(publicKey: string): Promise<UTXOReference[]> {
+    let utxos = [] as UTXOReference[]
+    const payments = await this.reactions.find({recipient: publicKey}).toArray()
+    console.log("AllReactions", await this.reactions.find().toArray())
+    console.log("findResult", payments)
+    for(const payment of payments)
+    {
+      utxos.push({txid: payment.txid, outputIndex: payment.outputIndex})
+    }
+    console.log("payments", payments)
+    return utxos
+  }
 }
