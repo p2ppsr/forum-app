@@ -8,7 +8,7 @@ import {
   P2PKH,
   ProtoWallet,
 } from '@bsv/sdk';
-// import BabbageGo from '@babbage/go';
+import BabbageGo from '@babbage/go';
 import constants from '../constants';
 
 function randomBase64(length: number): string {
@@ -17,17 +17,16 @@ function randomBase64(length: number): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-// const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
-//   monetization: {
-//     developerFeeSats: 10,
-//     developerIdentity:
-//       '025a2cb22976ff42743e4b168f853021b1042aa392792743d60b1234e9d5de5efe',
-//   },
-//   walletUnavailable: {
-//     title: 'REEEEEEEEE JACKIE TODO',
-//   },
-// });
-const wallet = new WalletClient('auto');
+const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
+  monetization: {
+    developerFeeSats: 10,
+    developerIdentity:
+      '025a2cb22976ff42743e4b168f853021b1042aa392792743d60b1234e9d5de5efe',
+  },
+  walletUnavailable: {
+    title: 'REEEEEEEEE JACKIE TODO',
+  },
+});
 const pushdrop = new PushDrop(wallet);
 
 export async function uploadTopic({
