@@ -17,8 +17,8 @@ let constants: Constants;
 constants = {
   protocolId: 'blockit',
   securityProtocol: 1,
-  topicManager: 'tm_blockit',
-  lookupService: 'ls_blockit',
+  topicManager: 'tm_blockitab',
+  lookupService: 'ls_blockitab',
   reactionFeePublicKey: '',
   reactionFeeSatoshis: 0,
   reactionRecipientSatoshis: 0,
