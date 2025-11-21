@@ -8,6 +8,7 @@ import PostReply from "./pages/PostReply";
 import ClaimPage from "./pages/Claim";
 import type { Topic } from "./utils/types";
 import { fetchAllTopics } from "./utils/forumFetches";
+import { WalletClient } from '@bsv/sdk'
 
 type RouteState =
   | { name: "home" }
@@ -47,6 +48,17 @@ const tabValue: 0 | 1 | false =
   route.name === "home" ? 0 :
   route.name === "upload" ? 1 :
   false;
+
+    useEffect(() => {
+      (async () => {
+        try {
+          const wallet = await new WalletClient()
+          await wallet.waitForAuthentication()
+        } catch (e) {
+          console.error(e)
+        }
+      })()
+    }, [])
 
   useEffect(() => { void loadTopics(); }, []);
   useEffect(() => {
