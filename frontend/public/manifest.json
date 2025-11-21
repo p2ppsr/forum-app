@@ -95,6 +95,12 @@
           "counterparty": "anyone",
           "description": "To create post, reactions and replys"
         }
+      ],
+      "basketAccess":[
+        {
+          "basket": "claimedReactionPayment",
+          "description": "To store all user claimed reactions."
+        }
       ]
     }
   }
