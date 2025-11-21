@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { uploadReaction } from "../utils/upload";
 import ReactionBar, { type ReactionCounts } from "../emoji/ReactionBar";
 import { Img } from "@bsv/uhrp-react";
+import { StorageUtils } from "@bsv/sdk";
 
 const normalizeReaction = (s?: string) => {
   const v = (s || "").trim().toLowerCase();
@@ -94,7 +95,7 @@ export default function PostCard({
   };
 
   const hasBody = Boolean((postContext.post.body || "").trim());
-  const hasMedia = Boolean((postContext.post.uhrpUrl || "").trim());
+  const hasMedia = Boolean(postContext.post.uhrpUrl && StorageUtils.isValidURL(postContext.post.uhrpUrl));
 
   const content = (
     <>

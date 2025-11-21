@@ -1,6 +1,7 @@
 // src/emoji/ReactionBar.tsx
 import { useMemo, useState } from "react";
 import { Chip, IconButton, Stack, Tooltip } from "@mui/material";
+import constants from "../constants";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
 import EmojiPickerPopover from "./EmojiModal";
 
@@ -21,6 +22,18 @@ export default function ReactionBar({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   useMemo(() => setLocal(counts), [counts]);
+
+  const getEmojiPrice = (emoji: string): number | undefined => {
+    const raw = emoji || "";
+    if (!raw) return undefined;
+    const base = raw
+      .replace(/\uFE0F/g, "")
+      .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "");
+    const prices = constants.emojiPrices as Record<string, number>;
+    if (Object.prototype.hasOwnProperty.call(prices, raw)) return prices[raw];
+    if (Object.prototype.hasOwnProperty.call(prices, base)) return prices[base];
+    return undefined;
+  };
 
   const sorted = useMemo(
     () =>
@@ -46,16 +59,24 @@ export default function ReactionBar({
   return (
     <>
       <Stack direction="row" spacing={1} alignItems="center">
-        {sorted.map(([emoji, n]) => (
-          <Chip
-            key={emoji}
-            size="small"
-            label={`${emoji} ${n}`}
-            variant="outlined"
-            onClick={(e) => { e.stopPropagation(); void handleReact(emoji); }}
-            sx={{ cursor: "pointer" }}
-          />
-        ))}
+        {sorted.map(([emoji, n]) => {
+          const price = getEmojiPrice(emoji);
+          const title = price ? `${emoji} • ${price} sats` : emoji;
+          return (
+            <Tooltip key={emoji} title={title} arrow>
+              <Chip
+                size="small"
+                label={`${emoji} ${n}`}
+                variant="outlined"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleReact(emoji);
+                }}
+                sx={{ cursor: "pointer" }}
+              />
+            </Tooltip>
+          );
+        })}
 
         {!disablePicker && (
           <>

@@ -197,7 +197,7 @@ export async function uploadReply({
     Utils.toArray(type, 'utf8'),
     Utils.toArray(postTxid, 'utf8'),
     Utils.toArray(parentReplyId, 'utf8'),
-    Utils.toArray('', 'utf8'),  // TODO add uhrp support
+    Utils.toArray('', 'utf8'), // TODO add uhrp support
     Utils.toArray(body, 'utf8'),
     Utils.toArray('' + createdAt, 'utf8'),
     Utils.toArray('' + createdBy, 'utf8'),

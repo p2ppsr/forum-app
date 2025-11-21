@@ -172,7 +172,7 @@ export default class ForumTopicManager implements TopicManager {
         return false;
       }
 
-      if (fields[3].length !== 0) {
+      if (fields[3].length !== 0 && fields[3].length >= 8) {
         if (!StorageUtils.isValidURL(Utils.toUTF8(Utils.toArray(fields[3])))) {
           console.log('Invalid post image URL');
           return false;
