@@ -25,7 +25,7 @@ const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
       '025a2cb22976ff42743e4b168f853021b1042aa392792743d60b1234e9d5de5efe',
   },
   walletUnavailable: {
-    title: 'REEEEEEEEE JACKIE TODO',
+    title: 'Blockit Social Media App',
   },
 });
 const pushdrop = new PushDrop(wallet);

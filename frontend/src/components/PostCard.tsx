@@ -105,7 +105,11 @@ export default function PostCard({
             {postContext.post.title}
           </Typography>
         }
-        subheader={dateString}
+        subheader={
+          postContext.post.createdBy
+            ? `${dateString} • by ${postContext.post.createdBy}`
+            : dateString
+        }
         sx={{ pb: 0 }}
       />
 
