@@ -21,6 +21,7 @@ export interface Post {
   topicId: string
   title: string
   body: string
+  uhrpUrl: string
   createdAt: string
   createdBy: string
   tags?: string[]
@@ -32,6 +33,7 @@ export interface Reply {
   parentPostId: string
   parentReplyId?: string
   body: string
+  uhrpUrl: string
   createdAt: string
   createdBy: string
   preEditId?: string

@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Card,
-  CardActions,
   CardContent,
   CircularProgress,
   Stack,
@@ -16,17 +15,17 @@ import {
   Utils,
   ProtoWallet,
   WalletClient,
-  } from '@bsv/sdk';
+} from '@bsv/sdk';
 import constants from '../constants';
 
 type Claimable = {
-  tx: any,
-  beef: number[],
+  tx: any;
+  beef: number[];
   txid: string;
   outputIndex: number;
   satoshis: number;
   emoji: string;
-  fromPubKey: string; // reactor identity
+  fromPubKey: string;
 };
 
 export default function ClaimPage() {
@@ -36,6 +35,11 @@ export default function ClaimPage() {
   const [claiming, setClaiming] = useState<string | null>(null);
   const wallet = useMemo(() => new WalletClient('auto', 'localhost'), []);
 
+  const lookupResolver = new LookupResolver({
+    networkPreset:
+      window.location.hostname === 'localhost' ? 'local' : 'mainnet',
+  });
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -43,21 +47,20 @@ export default function ClaimPage() {
       const userPubKey = (await wallet.getPublicKey({ identityKey: true }))
         .publicKey;
       // Query backend lookup for all reactions
-      const resolver = new LookupResolver({
-        networkPreset:
-          window.location.hostname === 'localhost' ? 'local' : 'mainnet',
-      });
+
       const question = {
         service: constants.lookupService,
-        query: { query: 'getpaymentsfor', parameter: { publicKey: userPubKey } },
+        query: {
+          query: 'getpaymentsfor',
+          parameter: { publicKey: userPubKey },
+        },
       } as any;
-      const lookupResult = await resolver.query(question);
+      const lookupResult = await lookupResolver.query(question);
       if (lookupResult.type !== 'output-list') {
         throw new Error('Unexpected response from lookup service');
       }
       const next: Claimable[] = [];
-      console.log("lookupResult",lookupResult)
-      
+
       for (const out of lookupResult.outputs) {
         try {
           const tx = await Transaction.fromBEEF(out.beef);
@@ -65,52 +68,55 @@ export default function ClaimPage() {
           // Find the reaction PushDrop output to extract emoji and reactor pubkey
           let emoji = '';
           let fromPubKey = '';
-          tx.outputs[0].lockingScript
-          const decoded = await PushDrop.decode(tx.outputs[0].lockingScript as any);
+          tx.outputs[0].lockingScript;
+          const decoded = await PushDrop.decode(
+            tx.outputs[0].lockingScript as any
+          );
           const f = decoded.fields;
           const type = Utils.toUTF8(Utils.toArray(f[0]));
           if (type === 'reaction') {
             emoji = Utils.toUTF8(Utils.toArray(f[4]));
             fromPubKey = Utils.toUTF8(Utils.toArray(f[5]));
           }
-          if(tx.outputs[1].satoshis){
-          next.push({
-            tx: tx,
-            beef: out.beef,
-            txid: tx.id('hex'),
-            outputIndex: 1,
-            satoshis: tx.outputs[1].satoshis,
-            emoji,
-            fromPubKey,
-          });
-        }
-        } catch {
-        }
+          if (tx.outputs[1].satoshis) {
+            next.push({
+              tx: tx,
+              beef: out.beef,
+              txid: tx.id('hex'),
+              outputIndex: 1,
+              satoshis: tx.outputs[1].satoshis,
+              emoji,
+              fromPubKey,
+            });
+          }
+        } catch {}
       }
 
-        const baskettedPayments = await wallet.listOutputs({
-          basket: 'claimedReactionPayment',
-        })
+      const baskettedPayments = await wallet.listOutputs({
+        basket: 'claimedReactionPayment',
+      });
 
-        const baskettedArr = Array.isArray(baskettedPayments)
-          ? baskettedPayments
-          : (baskettedPayments?.outputs ?? []);
+      const baskettedArr = Array.isArray(baskettedPayments)
+        ? baskettedPayments
+        : baskettedPayments?.outputs ?? [];
 
-        const claimedTxids = new Set(
-          baskettedArr
-            .map((o: any) => {
-              const op = o?.outpoint ?? o?.outPoint ?? o?.out_point;
-              if (typeof op === 'string') {
-                return op.split(/[.:]/)[0];
-              }
-              if (o?.txid || o?.txId) return (o.txid ?? o.txId);
-              return null;
-            })
-            .filter((v: any): v is string => Boolean(v))
-        );
-        const filteredNext = next.filter((c) => !claimedTxids.has(c.txid));
+      const claimedTxids = new Set(
+        baskettedArr
+          .map((o: any) => {
+            const op = o?.outpoint ?? o?.outPoint ?? o?.out_point;
+            if (typeof op === 'string') {
+              return op.split(/[.:]/)[0];
+            }
+            if (o?.txid || o?.txId) return o.txid ?? o.txId;
+            return null;
+          })
+          .filter((v: any): v is string => Boolean(v))
+      );
+      const filteredNext = next.filter(
+        (claimable) => !claimedTxids.has(claimable.txid)
+      );
 
-        setItems(filteredNext);
+      setItems(filteredNext);
     } catch (e: any) {
       setError(e?.message || String(e));
     } finally {
@@ -121,126 +127,81 @@ export default function ClaimPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const claimOne = useCallback(
-    async (c: Claimable) => {
-      setClaiming(`${c.txid}:${c.outputIndex}`);
+ 
+  const claimAll = useCallback(
+    async () => {
+      if (items.length === 0) return;
+      setClaiming('ALL');
+      setError(null);
       try {
-        const resolver = new LookupResolver({
-          networkPreset:
-            window.location.hostname === 'localhost' ? 'local' : 'mainnet',
-        });
-        const question = {
-          service: constants.lookupService,
-          query: { query: 'getReactionByTxid', parameter: {txid: c.txid, outputIndex: 0} },
-        } as any;
-        const lookupResult = await resolver.query(question);
-        if (lookupResult.type !== 'output-list')
-          throw new Error('Unexpected lookup response');
+        const anyoneWallet = new ProtoWallet('anyone');
+        const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey(
+          {
+            identityKey: true,
+          }
+        );
 
-        const result = Transaction.fromBEEF(lookupResult.outputs[0].beef)
-        if (!result) throw new Error('Transaction not found in lookup index');
-        const fields = PushDrop.decode(result.outputs[0].lockingScript)
-        console.log(fields)
-        let derivationPrefix = Utils.toUTF8(fields.fields[7])
-        let derivationSuffix = Utils.toUTF8(fields.fields[8])
-        console.log("result",result )
-        console.log("c.txid",c.txid)
-        console.log("c",c)
-        console.log("derivationPrefix",derivationPrefix)
-        console.log("derivationSuffix",derivationSuffix)
-        console.log("c.fromPubKey",c.fromPubKey)
+        await Promise.all(
+          items.map(async (claimable) => {
+            try {
+              const question = {
+                service: constants.lookupService,
+                query: {
+                  query: 'getReactionByTxid',
+                  parameter: { txid: claimable.txid, outputIndex: 0 },
+                },
+              } as any;
+              const lookupResult = await lookupResolver.query(question);
+              if (lookupResult.type !== 'output-list')
+                throw new Error('Unexpected lookup response');
 
-        let anyoneWallet = new ProtoWallet("anyone")
-        const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
-          identityKey: true,
-        })
-        console.log("derivedPublicKey", derivedPublicKey)
-        // Internalize the specific output into the wallet
-        await wallet.internalizeAction({
-          tx: c.tx.toAtomicBEEF(),
-          outputs: [
-            {
-              insertionRemittance: {
-                basket: "claimedReactionPayment",
-              },
-              outputIndex: 0,
-              protocol: 'basket insertion',
-            },
-            {
-              paymentRemittance: {
-                derivationPrefix: derivationPrefix,
-                derivationSuffix: derivationSuffix,
-                senderIdentityKey: derivedPublicKey,
-              },
-              outputIndex: c.outputIndex,
-              protocol: 'wallet payment',
-            },
-          ],
-          labels: ['reaction-payout'],
-          description: `Claim reaction payout ${c.emoji}`,
-        });
-      
-      } catch (e) {
+              const result = Transaction.fromBEEF(lookupResult.outputs[0].beef);
+              if (!result)
+                throw new Error('Transaction not found in lookup index');
+              const fields = PushDrop.decode(result.outputs[0].lockingScript);
+              const derivationPrefix = Utils.toUTF8(fields.fields[7]);
+              const derivationSuffix = Utils.toUTF8(fields.fields[8]);
+
+              // Internalize the specific output into the wallet
+              await wallet.internalizeAction({
+                tx: claimable.tx.toAtomicBEEF(),
+                outputs: [
+                  {
+                    insertionRemittance: {
+                      basket: 'claimedReactionPayment',
+                    },
+                    outputIndex: 0,
+                    protocol: 'basket insertion',
+                  },
+                  {
+                    paymentRemittance: {
+                      derivationPrefix: derivationPrefix,
+                      derivationSuffix: derivationSuffix,
+                      senderIdentityKey: derivedPublicKey,
+                    },
+                    outputIndex: claimable.outputIndex,
+                    protocol: 'wallet payment',
+                  },
+                ],
+                labels: ['reaction-payout'],
+                description: `Claim reaction payout ${claimable.emoji}`,
+              });
+            } catch (error) {
+              console.error(error);
+            }
+          })
+        );
+
+        await load();
+      } catch (e: any) {
         console.error(e);
+        setError(e?.message || String(e));
       } finally {
         setClaiming(null);
       }
     },
-    [wallet]
+    [items, load, lookupResolver, wallet]
   );
-
-  const claimAll = useCallback(async () => {
-    setClaiming('ALL');
-    try {
-      const resolver = new LookupResolver({
-        networkPreset:
-          window.location.hostname === 'localhost' ? 'local' : 'mainnet',
-      });
-      const question = {
-        service: constants.lookupService,
-        query: { query: 'getAllReactions' },
-      } as any;
-      const lookupResult = await resolver.query(question);
-      if (lookupResult.type !== 'output-list')
-        throw new Error('Unexpected lookup response');
-
-      // Group claimables by txid to minimize internalizeAction calls
-      const byTx = new Map<string, { beef: number[]; outputs: number[] }>();
-      for (const c of items) {
-        const entry = byTx.get(c.txid);
-        if (!entry) {
-          const rec = lookupResult.outputs.find((o: any) => {
-            try {
-              return Transaction.fromBEEF(o.beef).id('hex') === c.txid;
-            } catch {
-              return false;
-            }
-          });
-          if (!rec) continue;
-          byTx.set(c.txid, { beef: rec.beef, outputs: [c.outputIndex] });
-        } else {
-          entry.outputs.push(c.outputIndex);
-        }
-      }
-
-      for (const [, { beef, outputs }] of byTx.entries()) {
-        await wallet.internalizeAction({
-          tx: beef,
-          outputs: outputs.map((i) => ({
-            outputIndex: i,
-            protocol: 'wallet payment',
-          })),
-          labels: ['reaction-payout'],
-          description: `Claim ${outputs.length} payout(s)`,
-        });
-      }
-
-      setItems([]);
-    } finally {
-      setClaiming(null);
-    }
-  }, [items, wallet]);
 
   return (
     <Box>
@@ -275,33 +236,25 @@ export default function ClaimPage() {
       )}
 
       <Stack spacing={2}>
-        {items.map((c) => (
-          <Card key={`${c.txid}:${c.outputIndex}`} variant="outlined">
+        {items.map((claimable) => (
+          <Card
+            key={`${claimable.txid}:${claimable.outputIndex}`}
+            variant="outlined"
+          >
             <CardContent>
-              <Typography variant="subtitle1">Reaction: {c.emoji}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                From: {c.fromPubKey.slice(0, 16)}…
+              <Typography variant="subtitle1">
+                Reaction: {claimable.emoji}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Amount: {c.satoshis} sats
+                From: {claimable.fromPubKey.slice(0, 16)}…
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Amount: {claimable.satoshis} sats
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                UTXO: {c.txid.slice(0, 16)}…:{c.outputIndex}
+                UTXO: {claimable.txid.slice(0, 16)}…:{claimable.outputIndex}
               </Typography>
             </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                disabled={claiming !== null}
-                onClick={() => {
-                  void claimOne(c);
-                }}
-              >
-                {claiming === `${c.txid}:${c.outputIndex}`
-                  ? 'Claiming...'
-                  : 'Claim'}
-              </Button>
-            </CardActions>
           </Card>
         ))}
       </Stack>

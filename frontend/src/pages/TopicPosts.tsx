@@ -7,7 +7,7 @@ import { fetchAllPosts } from "../utils/forumFetches";
 
 type Props = {
   topic?: Topic | null;
-  slug?: string; // compatibility with App.tsx; not used here
+  slug?: string;
   onCreatePostClick?: () => void;
 };
 

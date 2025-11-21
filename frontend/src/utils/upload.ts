@@ -7,6 +7,7 @@ import {
   PublicKey,
   P2PKH,
   ProtoWallet,
+  StorageUploader,
 } from '@bsv/sdk';
 import BabbageGo from '@babbage/go';
 import constants from '../constants';
@@ -28,6 +29,10 @@ const wallet = new BabbageGo(new WalletClient('auto', 'localhost'), {
   },
 });
 const pushdrop = new PushDrop(wallet);
+const storageUploader = new StorageUploader({
+  storageURL: constants.storageUrl,
+  wallet,
+});
 
 export async function uploadTopic({
   title,
@@ -93,11 +98,13 @@ export async function uploadPost({
   topicTxid,
   title,
   body,
+  file,
   tags,
 }: {
   topicTxid: string;
   title: string;
   body: string;
+  file: File | null;
   tags: string[];
 }) {
   const type = 'post';
@@ -106,10 +113,29 @@ export async function uploadPost({
   const createdBy = (await wallet.getPublicKey({ identityKey: true }))
     .publicKey;
 
+  let uhrpUrl = '';
+  try {
+    if (file) {
+      const year = 525600;
+      const fileData = {
+        data: Array.from(new Uint8Array(await file.arrayBuffer())),
+        type: file.type,
+      };
+      const uploadResult = await storageUploader.publishFile({
+        file: fileData,
+        retentionPeriod: year,
+      });
+      uhrpUrl = uploadResult.uhrpURL;
+    }
+  } catch (error) {
+    throw new Error('Failed to upload file: ' + error);
+  }
+
   const fields = [
     Utils.toArray(type, 'utf8'),
     Utils.toArray(topicTxid, 'utf8'),
     Utils.toArray(title, 'utf8'),
+    Utils.toArray(uhrpUrl, 'utf8'),
     Utils.toArray(body, 'utf8'),
     Utils.toArray('' + createdAt, 'utf8'),
     Utils.toArray('' + createdBy, 'utf8'),
@@ -171,6 +197,7 @@ export async function uploadReply({
     Utils.toArray(type, 'utf8'),
     Utils.toArray(postTxid, 'utf8'),
     Utils.toArray(parentReplyId, 'utf8'),
+    Utils.toArray('', 'utf8'),  // TODO add uhrp support
     Utils.toArray(body, 'utf8'),
     Utils.toArray('' + createdAt, 'utf8'),
     Utils.toArray('' + createdBy, 'utf8'),
@@ -199,13 +226,6 @@ export async function uploadReply({
       randomizeOutputs: false,
     },
   });
-
-  console.log(`type: ${type}`);
-  console.log(`postTxid: ${postTxid}`);
-  console.log(`parentReplyId: ${parentReplyId}`);
-  console.log(`body: ${body}`);
-  console.log(`createdAt: ${createdAt}`);
-  console.log(`createdBy: ${createdBy}`);
 
   if (!tx) {
     throw new Error('Error creating action');
@@ -278,30 +298,30 @@ export async function uploadReaction({
 
   // Optional server fee output if configured (non-empty and >0)
   const emojiPrice = (constants.emojiPrices as any)[reaction] ?? 0;
-  console.log("emojiPrice", emojiPrice);
-    let anyoneWallet = await new ProtoWallet("anyone")
-    const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
-      protocolID: [2, '3241645161d8'],
-      keyID: `${derivationPrefix} ${derivationSuffix}`,
-      counterparty: recipientPublicKey
-    })
-    console.log("recipientPublicKey", recipientPublicKey)
-    console.log("derivedPublicKey", derivedPublicKey)
-    const feeLockingScript = new P2PKH()
-      .lock(PublicKey.fromString(derivedPublicKey).toAddress())
-      .toHex();
-    outputs.push({
-      lockingScript: feeLockingScript,
-      satoshis: emojiPrice,
-      outputDescription: 'Reaction fee',
-    });
+  console.log('emojiPrice', emojiPrice);
+  let anyoneWallet = await new ProtoWallet('anyone');
+  const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
+    protocolID: [2, '3241645161d8'],
+    keyID: `${derivationPrefix} ${derivationSuffix}`,
+    counterparty: recipientPublicKey,
+  });
+  console.log('recipientPublicKey', recipientPublicKey);
+  console.log('derivedPublicKey', derivedPublicKey);
+  const feeLockingScript = new P2PKH()
+    .lock(PublicKey.fromString(derivedPublicKey).toAddress())
+    .toHex();
+  outputs.push({
+    lockingScript: feeLockingScript,
+    satoshis: emojiPrice,
+    outputDescription: 'Reaction fee',
+  });
 
-  console.log("outputs", outputs);
-  console.log("Expectedhex", feeLockingScript);
-  console.log("satoshis", emojiPrice)
-  console.log("recipientPublicKey", recipientPublicKey)
-  console.log("derivationPrefix", derivationPrefix)
-  console.log("derivationSuffix", derivationSuffix)
+  console.log('outputs', outputs);
+  console.log('Expectedhex', feeLockingScript);
+  console.log('satoshis', emojiPrice);
+  console.log('recipientPublicKey', recipientPublicKey);
+  console.log('derivationPrefix', derivationPrefix);
+  console.log('derivationSuffix', derivationSuffix);
   const { tx } = await wallet.createAction({
     outputs,
     description: 'Publish a reaction (with fee)',

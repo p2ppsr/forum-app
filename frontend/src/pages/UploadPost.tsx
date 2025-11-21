@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -10,6 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { topicExists } from "../utils/topicExists";
 import { uploadPost } from "../utils/upload";
 
@@ -32,6 +33,9 @@ export default function UploadPost() {
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [topic, setTopic] = useState<string>(() => getTopicFromHash());
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const onHash = () => setTopic(getTopicFromHash());
@@ -39,10 +43,54 @@ export default function UploadPost() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  useEffect(() => {
+    if (!mediaFile) {
+      setMediaPreview(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(mediaFile);
+    setMediaPreview(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [mediaFile]);
+
   const canSubmit = useMemo(
-    () => tab === "text" && title.trim() && body.trim(),
-    [tab, title, body]
+    () =>
+      tab === "text"
+        ? Boolean(title.trim() && body.trim())
+        : Boolean(title.trim() && mediaFile),
+    [tab, title, body, mediaFile]
   );
+
+  const handleFileSelect = (file: File | null) => {
+    if (!file) {
+      setMediaFile(null);
+      return;
+    }
+
+    if (
+      !file.type.startsWith("image/") &&
+      !file.type.startsWith("video/")
+    ) {
+      setError("Only image or video files are supported.");
+      setMediaFile(null);
+      return;
+    }
+
+    setError(null);
+    setMediaFile(file);
+  };
+
+  const clearMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const onPost = async () => {
     const topicTxid = await getTopicTxid();
@@ -51,8 +99,28 @@ export default function UploadPost() {
       return;
     }
 
-    await uploadPost({ topicTxid, title, body, tags: [] });
-    // Redirect back to the thread page, similar to how creating a topic navigates after success
+    if (tab === "text") {
+      await uploadPost({
+        topicTxid,
+        title,
+        body,
+        file: null,
+        tags: [],
+      });
+    } else {
+      if (!mediaFile) {
+        setError("Please select an image or video to upload.");
+        return;
+      }
+      await uploadPost({
+        topicTxid,
+        title,
+        body,
+        file: mediaFile,
+        tags: [],
+      });
+    }
+
     const target = topic ? `/${encodeURIComponent(topic)}` : "/home";
     window.location.hash = target;
   };
@@ -149,9 +217,154 @@ export default function UploadPost() {
             </Box>
           </Stack>
         ) : (
-          <Box sx={{ mt: 3 }}>
-            <Alert severity="info">Images & Video — Coming Soon</Alert>
-          </Box>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <TextField
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              inputProps={{ maxLength: 300 }}
+              helperText={`${title.length}/300`}
+            />
+            <Typography variant="body2" color="text.secondary">
+              Add flair and tags (optional)
+            </Typography>
+            <Box
+              sx={{
+                mt: 1,
+                p: 3,
+                border: "1px dashed",
+                borderColor: "divider",
+                borderRadius: 1,
+                textAlign: "center",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const file = event.dataTransfer.files?.[0] ?? null;
+                handleFileSelect(file);
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  handleFileSelect(file);
+                }}
+              />
+              {mediaPreview && mediaFile ? (
+                <Stack spacing={1} alignItems="center">
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: "100%",
+                      maxWidth: 480,
+                      borderRadius: 1,
+                      overflow: "hidden",
+                      bgcolor: undefined,
+                      "&::before": {
+                        content: '""',
+                        display: "block",
+                        paddingTop: "56.25%",
+                      },
+                    }}
+                  >
+                    {mediaFile.type.startsWith("image/") ? (
+                      <Box
+                        component="img"
+                        src={mediaPreview}
+                        alt={mediaFile.name}
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        component="video"
+                        src={mediaPreview}
+                        controls
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                        }}
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {mediaFile.name}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      clearMedia();
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </Stack>
+              ) : (
+                <Stack spacing={1} alignItems="center">
+                  <CloudUploadIcon color="action" />
+                  <Typography variant="body2">
+                    Drag and drop or click to upload media
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Images or video files
+                  </Typography>
+                </Stack>
+              )}
+            </Box>
+            <TextField
+              label="Body text (optional)"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              multiline
+              minRows={4}
+            />
+            {status && <Alert severity="info">{status}</Alert>}
+            {error && <Alert severity="error">{error}</Alert>}
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                disabled={!canSubmit}
+                onClick={onPost}
+              >
+                Post
+              </Button>
+              <Button
+                variant="text"
+                onClick={() => {
+                  setTitle("");
+                  setBody("");
+                  setStatus("");
+                  setError(null);
+                  clearMedia();
+                }}
+              >
+                Clear
+              </Button>
+            </Box>
+          </Stack>
         )}
       </Paper>
     </Stack>

@@ -1,4 +1,5 @@
 import {
+  Box,
   Card,
   CardActionArea,
   CardActions,
@@ -12,6 +13,7 @@ import type { PostContext } from "../utils/types";
 import { useMemo } from "react";
 import { uploadReaction } from "../utils/upload";
 import ReactionBar, { type ReactionCounts } from "../emoji/ReactionBar";
+import { Img } from "@bsv/uhrp-react";
 
 const normalizeReaction = (s?: string) => {
   const v = (s || "").trim().toLowerCase();
@@ -91,6 +93,9 @@ export default function PostCard({
     });
   };
 
+  const hasBody = Boolean((postContext.post.body || "").trim());
+  const hasMedia = Boolean((postContext.post.uhrpUrl || "").trim());
+
   const content = (
     <>
       <CardHeader
@@ -104,26 +109,60 @@ export default function PostCard({
       />
 
       <CardContent>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={
-            truncateBody
-              ? {
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  mb: cleanedTags.length ? 1 : 0,
-                }
-              : {
-                  whiteSpace: "pre-wrap",
-                  mb: cleanedTags.length ? 1 : 0,
-                }
-          }
-        >
-          {postContext.post.body}
-        </Typography>
+        {hasMedia && (
+          <Box sx={{ mb: hasBody || cleanedTags.length ? 1.5 : 0 }}>
+            <Box
+              sx={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 640,
+                borderRadius: 1,
+                overflow: "hidden",
+                "&::before": {
+                  content: '""',
+                  display: "block",
+                  paddingTop: "56.25%",
+                },
+              }}
+            >
+              <Img
+                src={postContext.post.uhrpUrl}
+                loading="lazy"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  backgroundColor: "transparent",
+                }}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {hasBody && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={
+              truncateBody
+                ? {
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    mb: cleanedTags.length ? 1 : 0,
+                  }
+                : {
+                    whiteSpace: "pre-wrap",
+                    mb: cleanedTags.length ? 1 : 0,
+                  }
+            }
+          >
+            {postContext.post.body}
+          </Typography>
+        )}
 
         {cleanedTags.length > 0 && (
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
