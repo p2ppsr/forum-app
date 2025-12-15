@@ -1,5 +1,5 @@
-import { AdmittanceInstructions, TopicManager } from '@bsv/overlay';
-import docs from './ForumTopicDocs.md.js';
+import { AdmittanceInstructions, TopicManager } from '@bsv/overlay'
+import docs from './ForumTopicDocs.md.js'
 import {
   PublicKey,
   PushDrop,
@@ -8,396 +8,265 @@ import {
   P2PKH,
   ProtoWallet,
   StorageUtils,
-} from '@bsv/sdk';
-import constants from '../const.js';
+} from '@bsv/sdk'
+import constants from '../const.js'
 
-/**
- * Forum for a Topic Manager that can be modified for your specific use-case.
- */
 export default class ForumTopicManager implements TopicManager {
-  /**
-   * Identify which outputs in the supplied transaction are admissible.
-   *
-   * @param beef          Raw transaction encoded in BEEF format.
-   * @param previousCoins Previously‑retained coins.
-   */
   async identifyAdmissibleOutputs(
     beef: number[],
     previousCoins: number[]
   ): Promise<AdmittanceInstructions> {
-    const admissibleOutputs: number[] = [];
+    const admissibleOutputs: number[] = []
 
     try {
-      const decodedTx = Transaction.fromBEEF(beef);
-      const outputs = decodedTx.outputs;
-      console.log('outputs: ', outputs);
-      console.log('outputs number: ', outputs.length);
+      const decodedTx = Transaction.fromBEEF(beef)
+      const outputs = decodedTx.outputs
+
       for (const [index, output] of outputs.entries()) {
-        console.log('INDEX!!!!!!!:', index);
         try {
-          const decodedScript = PushDrop.decode(output.lockingScript);
-          const fields = decodedScript.fields;
+          const decodedScript = PushDrop.decode(output.lockingScript)
+          const fields = decodedScript.fields
+          const kind = this.toStr(fields, 0)
 
-          // Check if the output is a topic
-          if (Utils.toUTF8(Utils.toArray(fields[0])) === 'topic') {
-            (await this.checkTopic(fields))
-              ? admissibleOutputs.push(index)
-              : console.log('Invalid topic');
-            continue;
+          if (kind === 'topic') {
+            if (await this.checkTopic(fields)) admissibleOutputs.push(index)
+            continue
           }
-
-          // Check if the output is a post
-          if (Utils.toUTF8(Utils.toArray(fields[0])) === 'post') {
-            (await this.checkPost(fields))
-              ? admissibleOutputs.push(index)
-              : console.log('Invalid post');
-            continue;
+          if (kind === 'post') {
+            if (await this.checkPost(fields)) admissibleOutputs.push(index)
+            continue
           }
-
-          // Check if the output is a reply
-          if (Utils.toUTF8(Utils.toArray(fields[0])) === 'reply') {
-            (await this.checkReply(fields))
-              ? admissibleOutputs.push(index)
-              : console.log('Invalid reply');
-            continue;
+          if (kind === 'reply') {
+            if (await this.checkReply(fields)) admissibleOutputs.push(index)
+            continue
           }
-
-          // Check if the output is a reaction
-          if (Utils.toUTF8(Utils.toArray(fields[0])) === 'reaction') {
-            (await this.checkReaction(fields, outputs, index))
-              ? (admissibleOutputs.push(index),
-                console.log('ADMITTED INDEX: ' + index))
-              : console.log('Invalid reaction');
-            continue;
+          if (kind === 'reaction') {
+            if (await this.checkReaction(fields, outputs)) admissibleOutputs.push(index)
+            continue
           }
-        } catch (error) {
-          continue;
+        } catch {
+          // Not a PushDrop output or malformed; ignore
+          continue
         }
       }
     } catch (error) {
-      console.error('Error identifying admissible outputs', error);
+      console.error('[BLOCKTEST] Error identifying admissible outputs', error)
     }
 
     return {
       outputsToAdmit: admissibleOutputs,
-      coinsToRetain: [],
-    };
+      coinsToRetain: previousCoins,
+    }
   }
 
-  /**
-   * Get the documentation associated with this topic manager
-   * @returns A promise that resolves to a string containing the documentation
-   */
   async getDocumentation(): Promise<string> {
-    return docs;
+    return docs
   }
 
-  /**
-   * Get metadata about the topic manager
-   * @returns A promise that resolves to an object containing metadata
-   */
   async getMetaData(): Promise<{
-    name: string;
-    shortDescription: string;
-    iconURL?: string;
-    version?: string;
-    informationURL?: string;
+    name: string
+    shortDescription: string
+    iconURL?: string
+    version?: string
+    informationURL?: string
   }> {
     return {
       name: 'Forum Topic Manager',
       shortDescription: 'Admit outputs into a topic',
-    };
-  }
-
-  async checkTopic(fields: number[][]) {
-    try {
-      if (fields.length !== 6) {
-        console.log('Invalid topic fields length');
-        return false;
-      }
-
-      const titleStr = Utils.toUTF8(Utils.toArray(fields[1]));
-      const allowed = /^[A-Za-z0-9_-]+$/;
-      if (!allowed.test(titleStr)) {
-        console.log('Invalid topic name');
-        return false;
-      }
-
-      if (fields[2].length === 0) {
-        console.log('Invalid topic description');
-        return false;
-      }
-
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[3])), 10);
-      const now = Date.now();
-      const thirtyMin = 30 * 60 * 1000;
-
-      if (
-        Number.isNaN(createdAt) ||
-        createdAt > now ||
-        createdAt < now - thirtyMin
-      ) {
-        console.log('Invalid topic created_at');
-        return false;
-      }
-
-      try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[4])));
-      } catch {
-        console.log('Invalid public key format.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error checking topic', error);
-      return false;
     }
-
-    return true;
   }
 
-  async checkPost(fields: number[][]) {
+  // ---------------------------
+  // Helpers (safe + consistent)
+  // ---------------------------
+
+  private toStr(fields: number[][], idx: number): string {
+    const f = fields[idx]
+    return f ? Utils.toUTF8(Utils.toArray(f)) : ''
+  }
+
+  private hasNonEmpty(fields: number[][], idx: number): boolean {
+    const f = fields[idx]
+    return Array.isArray(f) && f.length > 0
+  }
+
+  private isReasonableCreatedAt(createdAtStr: string): boolean {
+    const createdAt = Number.parseInt(createdAtStr, 10)
+    if (!Number.isFinite(createdAt)) return false
+    if (createdAt < 0) return false
+
+    const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000
+    if (createdAt > Date.now() + MAX_FUTURE_SKEW_MS) return false
+
+    return true
+  }
+
+  // ---------------------------
+  // Validators
+  // ---------------------------
+
+  async checkTopic(fields: number[][]): Promise<boolean> {
     try {
-      if (fields.length !== 10) {
-        console.log('Invalid post fields length');
-        return false;
-      }
+      if (fields.length !== 6) return false
 
-      if (fields[1].length === 0) {
-        console.log('Invalid post topic txid');
-        return false;
-      }
+      const titleStr = this.toStr(fields, 1)
+      const allowed = /^[A-Za-z0-9_-]+$/
+      if (!allowed.test(titleStr)) return false
 
-      if (fields[2].length === 0) {
-        console.log('Invalid post title');
-        return false;
-      }
+      if (!this.hasNonEmpty(fields, 2)) return false
 
-      if (fields[3].length !== 0 && fields[3].length >= 8) {
-        if (!StorageUtils.isValidURL(Utils.toUTF8(Utils.toArray(fields[3])))) {
-          console.log('Invalid post image URL');
-          return false;
-        }
-      } else if (fields[4].length === 0) {
-        console.log('Invalid post body');
-        return false;
-      }
+      const createdAtStr = this.toStr(fields, 3)
+      if (!this.isReasonableCreatedAt(createdAtStr)) return false
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10);
-      const now = Date.now();
-      const thirtyMin = 30 * 60 * 1000;
-
-      if (
-        Number.isNaN(createdAt) ||
-        createdAt > now ||
-        createdAt < now - thirtyMin
-      ) {
-        console.log('Invalid post created_at');
-        return false;
-      }
-
+      // creator pubkey
+      const pubKeyStr = this.toStr(fields, 4)
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])));
+        PublicKey.fromString(pubKeyStr)
       } catch {
-        console.log('Invalid public key format.');
-        return false;
+        return false
       }
 
-      // No check for tags
-      // No check for pre-edit txid
-    } catch (error) {
-      console.error('Error checking post', error);
-      return false;
+      return true
+    } catch (e) {
+      console.error('[BLOCKTEST] Error checking topic', e)
+      return false
     }
-
-    return true;
   }
 
-  async checkReply(fields: number[][]) {
+  async checkPost(fields: number[][]): Promise<boolean> {
     try {
-      console.log(fields.length);
-      for (const field of fields) {
-        console.log(Utils.toUTF8(Utils.toArray(field)));
-      }
-      if (fields.length !== 9) {
-        console.log('Invalid reply fields length');
-        return false;
-      }
+      if (fields.length !== 10) return false
 
-      if (fields[1].length === 0) {
-        console.log('Invalid reply post txid');
-        return false;
-      }
+      if (!this.hasNonEmpty(fields, 1)) return false // topic txid
+      if (!this.hasNonEmpty(fields, 2)) return false // title
 
-      // No check for parent reply id
-
-      /*if (fields[3].length !== 0) {
-        if (!StorageUtils.isValidURL(Utils.toUTF8(Utils.toArray(fields[3])))) {
-          console.log('Invalid reply image URL');
-          return false;
-        }
-      } else */if (fields[4].length === 0) {
-        console.log('Invalid reply body');
-        return false;
+      // image URL OR body required
+      const imageField = fields[3]
+      const hasImage = Array.isArray(imageField) && imageField.length >= 8
+      if (hasImage) {
+        const imageUrl = this.toStr(fields, 3)
+        if (!StorageUtils.isValidURL(imageUrl)) return false
+      } else {
+        if (!this.hasNonEmpty(fields, 4)) return false // body
       }
 
-      const createdAt = parseInt(Utils.toUTF8(Utils.toArray(fields[5])), 10);
-      const now = Date.now();
-      const thirtyMin = 30 * 60 * 1000;
+      const createdAtStr = this.toStr(fields, 5)
+      if (!this.isReasonableCreatedAt(createdAtStr)) return false
 
-      if (
-        Number.isNaN(createdAt) ||
-        createdAt > now ||
-        createdAt < now - thirtyMin
-      ) {
-        console.log('Invalid reply created_at');
-        return false;
-      }
-
+      const pubKeyStr = this.toStr(fields, 6)
       try {
-        PublicKey.fromString(Utils.toUTF8(Utils.toArray(fields[6])));
+        PublicKey.fromString(pubKeyStr)
       } catch {
-        console.log('Invalid public key format.');
-        return false;
+        return false
       }
 
-      // No check for pre-edit txid
-    } catch (error) {
-      console.error('Error checking reply', error);
-      return false;
+      return true
+    } catch (e) {
+      console.error('[BLOCKTEST] Error checking post', e)
+      return false
     }
-
-    return true;
   }
 
-  async checkReaction(
-    fields: number[][],
-    outputs: any[],
-    reactionIndex: number
-  ) {
+  async checkReply(fields: number[][]): Promise<boolean> {
     try {
-      // Require recipient identity key included (7th field)
-      if (fields.length !== 10) {
-        console.log('Invalid reaction fields length');
-        return false;
-      }
+      if (fields.length !== 9) return false
 
-      if (fields[1].length === 0) {
-        console.log('Invalid reaction topic txid');
-        return false;
-      }
+      if (!this.hasNonEmpty(fields, 1)) return false // post txid
 
-      if (fields[2].length === 0) {
-        console.log('Invalid reaction parent post txid');
-        return false;
-      }
+      // body required
+      if (!this.hasNonEmpty(fields, 4)) return false
 
-      if (fields[3].length === 0) {
-        console.log('Invalid reaction direct parent txid');
-        return false;
-      }
+      const createdAtStr = this.toStr(fields, 5)
+      if (!this.isReasonableCreatedAt(createdAtStr)) return false
 
-      if (fields[4].length === 0) {
-        console.log('Invalid reaction reaction');
-        return false;
-      }
-
-      // Validate creator and recipient public keys
-      let createdByStr = '';
-      let recipientKeyStr = '';
+      const pubKeyStr = this.toStr(fields, 6)
       try {
-        createdByStr = Utils.toUTF8(Utils.toArray(fields[5]));
-        PublicKey.fromString(createdByStr);
+        PublicKey.fromString(pubKeyStr)
       } catch {
-        console.log('Invalid public key format for createdBy.');
-        return false;
+        return false
+      }
+
+      return true
+    } catch (e) {
+      console.error('[BLOCKTEST] Error checking reply', e)
+      return false
+    }
+  }
+
+  async checkReaction(fields: number[][], outputs: any[]): Promise<boolean> {
+    try {
+      if (fields.length !== 10) return false
+
+      if (!this.hasNonEmpty(fields, 1)) return false // topic txid
+      if (!this.hasNonEmpty(fields, 2)) return false // parent post txid
+      if (!this.hasNonEmpty(fields, 3)) return false // direct parent txid
+      if (!this.hasNonEmpty(fields, 4)) return false // emoji
+
+      // Validate creator + recipient pubkeys
+      const createdByStr = this.toStr(fields, 5)
+      const recipientKeyStr = this.toStr(fields, 6)
+
+      try {
+        PublicKey.fromString(createdByStr)
+      } catch {
+        return false
       }
       try {
-        recipientKeyStr = Utils.toUTF8(Utils.toArray(fields[6]));
-        PublicKey.fromString(recipientKeyStr);
+        PublicKey.fromString(recipientKeyStr)
       } catch {
-        console.log('Invalid recipient public key format.');
-        return false;
+        return false
       }
 
-      if (fields[7].length === 0) {
-        console.log('Invalid reaction derivation prefix');
-        return false;
-      }
-
-      if (fields[8].length === 0) {
-        console.log('Invalid reaction derivation suffix');
-        return false;
-      }
+      if (!this.hasNonEmpty(fields, 7)) return false // derivation prefix
+      if (!this.hasNonEmpty(fields, 8)) return false // derivation suffix
 
       // Determine required payout from emoji price map (normalize variants)
-      const rawEmoji = Utils.toUTF8(Utils.toArray(fields[4]));
+      const rawEmoji = this.toStr(fields, 4)
       const baseEmoji = rawEmoji
         .replace(/\uFE0F/g, '')
-        .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '');
-      const emojiKey = (constants.emojiPrices as any)[rawEmoji]
-        ? rawEmoji
-        : baseEmoji;
-      const requiredSats = constants.emojiPrices[emojiKey] ?? 0;
-      if (!(requiredSats > 0)) {
-        console.log('No price configured for emoji');
-        return false;
-      }
-      console.log('fields8', Utils.toUTF8(fields[8]));
-      console.log('fields7', Utils.toUTF8(fields[7]));
-      let anyoneWallet = new ProtoWallet('anyone');
+        .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '')
+      const emojiKey = (constants.emojiPrices as any)[rawEmoji] ? rawEmoji : baseEmoji
+      const requiredSats = constants.emojiPrices[emojiKey] ?? 0
+      if (!(requiredSats > 0)) return false
+
+      // Derive expected recipient locking script
+      const prefix = this.toStr(fields, 7)
+      const suffix = this.toStr(fields, 8)
+
+      const anyoneWallet = new ProtoWallet('anyone')
       const { publicKey: derivedPublicKey } = await anyoneWallet.getPublicKey({
         protocolID: [2, '3241645161d8'],
-        keyID: `${Utils.toUTF8(fields[7])} ${Utils.toUTF8(fields[8])}`,
+        keyID: `${prefix} ${suffix}`,
         counterparty: recipientKeyStr,
-      });
+      })
+
       const expectedRecipientScriptHex = new P2PKH()
         .lock(PublicKey.fromString(derivedPublicKey).toAddress())
-        .toHex();
+        .toHex()
+        .toLowerCase()
 
-      console.log('outputs', outputs);
-      let hasvalid = false;
-      try {
-        const ls: any = outputs[1].lockingScript;
-        const scriptHex = outputs[1].lockingScript.toHex();
-        const sats = outputs[1].satoshis;
-        console.log(
-          '////////////////////////////////////////////////////////////\n'
-        );
-        console.log('outputlockingScript', outputs[1].lockingScript.toHex());
-        console.log('scriptHex', scriptHex);
-        console.log('expectedRecipientScriptHex', expectedRecipientScriptHex);
-        console.log('sats', sats);
-        console.log('requiredSats', requiredSats);
-        if (scriptHex === expectedRecipientScriptHex) {
-          if (typeof sats === 'number' && sats >= requiredSats) {
-            if (sats >= requiredSats) {
-              hasvalid = true;
-            } else {
-              console.log('Invalid sats');
-            }
-          } else {
-            console.log('Invalid sats');
-          }
-        } else {
-          console.log('Invalid recipient script hex');
+      // IMPORTANT: scan ALL outputs for the payout (not hard-coded outputs[1])
+      const hasValidPayout = outputs.some((o: any) => {
+        try {
+          const scriptHex = o?.lockingScript?.toHex?.()?.toLowerCase?.()
+          const sats = o?.satoshis
+          return (
+            typeof scriptHex === 'string' &&
+            scriptHex === expectedRecipientScriptHex &&
+            typeof sats === 'number' &&
+            sats >= requiredSats
+          )
+        } catch {
+          return false
         }
-      } catch (e) {
-        console.log('Error checking reaction payout', e);
-      } finally {
-        console.log(
-          '////////////////////////////////////////////////////////////\n'
-        );
-      }
+      })
 
-      if (!hasvalid) {
-        console.log('No valid recipient payout found in transaction');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error checking reaction', error);
-      return false;
+      if (!hasValidPayout) return false
+
+      return true
+    } catch (e) {
+      console.error('[BLOCKTEST] Error checking reaction', e)
+      return false
     }
-
-    return true;
   }
 }

@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@bsv/overlay": "^0.4.8",
-    "@bsv/sdk": "^1.8.2",
+    "@bsv/overlay": "git+https://github.com/ChanceBarimbao/overlay-services.git#48880cb7748d1c78142879971757bdce89ccba4c",
+    "@bsv/sdk": "git+https://github.com/bsv-blockchain/ts-sdk.git#32c76885285cd952474992e7f14e32cbe384b508",
     "@bsv/uhrp-react": "^1.0.4",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",

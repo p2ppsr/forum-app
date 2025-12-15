@@ -9,8 +9,8 @@ import type { SecurityLevel } from "@bsv/sdk"
   let constants: Constants = { 
     protocolId: "blockit" ,
     securityProtocol: 1,
-    topicManager: "tm_blockitab",
-    lookupService: "ls_blockitab",
+    topicManager: "tm_blockbeta",
+    lookupService: "ls_blockbeta",
     emojiPrices: {
   "😀": 2500,
   "😁": 4000,
