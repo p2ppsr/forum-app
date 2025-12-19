@@ -50,10 +50,10 @@
       "frontendHostingMethod": "HTTPS"
     },
     {
-      "name": "mainbeta",
+      "name": "sidenodebeta",
       "provider": "CARS",
-      "CARSCloudURL": "https://cars.babbage.systems",
-      "projectID": "81ff35b8c685c32feec42de63e8573bd",
+      "CARSCloudURL": "https://cars.metanet.club",
+      "projectID": "9a423bf52a31a528bcddf45a73abcb03",
       "network": "mainnet",
       "deploy": [
         "frontend",
@@ -62,10 +62,22 @@
       "frontendHostingMethod": "HTTPS"
     },
     {
-      "name": "sidenodebeta",
+      "name": "mainhistorytest",
+      "provider": "CARS",
+      "CARSCloudURL": "https://cars.babbage.systems",
+      "projectID": "6ef48eb4bc69c5601915fb87f764ea27",
+      "network": "mainnet",
+      "deploy": [
+        "frontend",
+        "backend"
+      ],
+      "frontendHostingMethod": "HTTPS"
+    },
+    {
+      "name": "metaclubcars",
       "provider": "CARS",
       "CARSCloudURL": "https://cars.metanet.club",
-      "projectID": "9a423bf52a31a528bcddf45a73abcb03",
+      "projectID": "328131a2aa9e313124a20918fe54d7c3",
       "network": "mainnet",
       "deploy": [
         "frontend",

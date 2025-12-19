@@ -14,10 +14,16 @@ import constants from '../const.js'
 export default class ForumTopicManager implements TopicManager {
   async identifyAdmissibleOutputs(
     beef: number[],
-    previousCoins: number[]
+    previousCoins: number[],
+    mode?: 'historical-tx' | 'current-tx' | 'historical-tx-no-spv'
   ): Promise<AdmittanceInstructions> {
     const admissibleOutputs: number[] = []
-
+    if(mode === 'historical-tx') {
+      console.log("/////////////////////HISTORY///////////////////////////")
+    }
+    if(mode === 'current-tx') {
+      console.log("/////////////////////CURRENT YAY AYAYAYAYAYAYYAYA///////////////////////////")
+    }
     try {
       const decodedTx = Transaction.fromBEEF(beef)
       const outputs = decodedTx.outputs
